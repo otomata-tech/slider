@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+"""List available brand chartes with summary tokens."""
+import json
+from _common import CHARTES, ok
+
+
+def main():
+    print("Available chartes (marques) :")
+    print()
+    for d in sorted(CHARTES.iterdir()):
+        if not d.is_dir():
+            continue
+        tokens_path = d / "tokens.json"
+        if not tokens_path.exists():
+            continue
+        t = json.loads(tokens_path.read_text())
+        primary = t.get("colors", {}).get("primary", {}).get("value", "—")
+        font    = t.get("fonts", {}).get("primary", {}).get("family", "—")
+        label   = t.get("label", d.name)
+        print(f"  • {d.name}")
+        print(f"      label   : {label}")
+        print(f"      primary : #{primary.lstrip('#')}")
+        print(f"      font    : {font}")
+        print(f"      path    : {d}")
+        print()
+
+
+if __name__ == "__main__":
+    main()

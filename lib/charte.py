@@ -1,0 +1,117 @@
+"""Charte loader — exposes colors / fonts / sizes / asset paths from
+chartes/<name>/.
+
+A charte is a directory with:
+    tokens.json   # source of truth (colors, fonts, scale)
+    tokens.py     # python-pptx RGBColor constants
+    tokens.css    # CSS variables (for any HTML rendering)
+    assets/       # logos, fonts, photos
+
+Usage:
+    from lib.charte import Charte
+    ca = Charte.load("credit-agricole")
+    ca.color("primary")            # RGBColor — sarcelle CA
+    ca.font_primary                 # "Raleway"
+    ca.asset("logo/ca-logo.jpg")    # absolute path
+    ca.token_size("h1")             # 46.0 (pt)
+"""
+from __future__ import annotations
+
+import json
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+from pptx.dml.color import RGBColor
+
+
+CHARTES_ROOT = Path(__file__).resolve().parent.parent / "chartes"
+
+
+def _hex_to_rgb(hex_str: str) -> RGBColor:
+    """#82B600 → RGBColor(0x82, 0xB6, 0x00). Also accepts no leading #."""
+    h = hex_str.lstrip("#")
+    if len(h) != 6:
+        raise ValueError(f"invalid hex color: {hex_str!r}")
+    return RGBColor(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+@dataclass
+class Charte:
+    """A loaded charte. Holds the raw tokens dict plus convenience accessors."""
+
+    name: str
+    root: Path
+    tokens: dict[str, Any] = field(repr=False)
+
+    # ------------------------------------------------------------------ load
+
+    @classmethod
+    def load(cls, name: str, *, root: Path | None = None) -> "Charte":
+        base = (root or CHARTES_ROOT) / name
+        tokens_path = base / "tokens.json"
+        if not tokens_path.exists():
+            raise FileNotFoundError(f"Charte not found: {tokens_path}")
+        tokens = json.loads(tokens_path.read_text(encoding="utf-8"))
+        return cls(name=name, root=base, tokens=tokens)
+
+    # ------------------------------------------------------------------ colors
+
+    def color(self, key: str) -> RGBColor:
+        """Return the color for `key` (e.g. "primary", "signature").
+        Raises KeyError if missing."""
+        entry = self.tokens["colors"].get(key)
+        if entry is None:
+            raise KeyError(f"color '{key}' not in charte '{self.name}'")
+        return _hex_to_rgb(entry["value"])
+
+    def color_hex(self, key: str) -> str:
+        return self.tokens["colors"][key]["value"]
+
+    # ------------------------------------------------------------------ fonts
+
+    @property
+    def font_primary(self) -> str:
+        return self.tokens["fonts"]["primary"]["family"]
+
+    @property
+    def font_condensed(self) -> str:
+        fonts = self.tokens["fonts"]
+        return fonts.get("condensed", fonts["primary"])["family"]
+
+    # ------------------------------------------------------------------ scale
+
+    def token_size(self, key: str) -> float:
+        """Return the pt size for a named scale entry (h1, h2, body, …)."""
+        return float(self.tokens["type-scale"][key]["size_pt"])
+
+    # ------------------------------------------------------------------ assets
+
+    def asset(self, rel_path: str) -> str:
+        """Return absolute path to an asset under assets/. Raises if missing."""
+        p = self.root / "assets" / rel_path
+        if not p.exists():
+            raise FileNotFoundError(f"asset '{rel_path}' missing in charte '{self.name}' ({p})")
+        return str(p)
+
+    def has_asset(self, rel_path: str) -> bool:
+        return (self.root / "assets" / rel_path).exists()
+
+    # ------------------------------------------------------------------ defaults
+
+    def default(self, key: str) -> str | None:
+        """Return the absolute path to a default asset declared in tokens.json
+        under `defaults.<key>`, or None if the entry is absent.
+
+        Used by layouts to auto-inject brand assets (cover photo, header logo…)
+        when the caller doesn't pass them explicitly.
+
+        Standard keys: ``cover_photo``, ``cover_logo``, ``header_logo``.
+        """
+        defaults = self.tokens.get("defaults") or {}
+        rel = defaults.get(key)
+        if not rel:
+            return None
+        p = self.root / "assets" / rel
+        return str(p) if p.exists() else None

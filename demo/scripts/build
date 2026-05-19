@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""Run a deck's build.py and report outputs.
+
+Usage:
+    slide-craft build <deck-dir>
+
+The deck-dir must contain a build.py. The script delegates execution to it
+(so any data.py + custom imports work naturally).
+"""
+from __future__ import annotations
+
+import argparse
+import runpy
+import sys
+from pathlib import Path
+
+from _common import fail
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("deck_dir", type=Path)
+    args = ap.parse_args()
+
+    deck_dir = args.deck_dir.expanduser().resolve()
+    build = deck_dir / "build.py"
+    if not build.exists():
+        fail(f"no build.py in {deck_dir}")
+
+    sys.path.insert(0, str(deck_dir))   # so `import data` works
+    print(f"building {deck_dir}/")
+    runpy.run_path(str(build), run_name="__main__")
+
+
+if __name__ == "__main__":
+    main()

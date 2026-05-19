@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+
+# Generated outputs are regenerable via `slide-craft build <deck>`
+decks/*/out/
+
+# Local previews
+preview-*.png
+*-screen.png
+
+# Large source files (originals from clients)
+decks/*/source/*.pptx.bak
+decks/*/source/*.docx.bak
+
+# Mission-scoped install artifacts
+demo/bin/
+
+# OS
+.DS_Store
