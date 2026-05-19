@@ -73,9 +73,22 @@ class Deck:
         return str(path)
 
     def export_pdf(self, pptx_path: str | os.PathLike,
-                   pdf_path: str | os.PathLike | None = None) -> str:
-        """Convert pptx → pdf via LibreOffice. Requires libreoffice-impress."""
-        from lib.pdf_export import pptx_to_pdf
+                   pdf_path: str | os.PathLike | None = None) -> str | None:
+        """Convert pptx → pdf via LibreOffice.
+
+        Returns the PDF path, or None if PDF export is unavailable/disabled:
+          - SLIDER_NO_PDF=1 in env (e.g. `slide-craft build --no-pdf` sets it)
+          - LibreOffice not installed (graceful skip with a one-line notice)
+        """
+        from lib.pdf_export import pptx_to_pdf, soffice_path
+
+        if os.environ.get("SLIDER_NO_PDF") == "1":
+            print("PDF skipped (SLIDER_NO_PDF=1)")
+            return None
+        if soffice_path() is None:
+            print("PDF skipped (LibreOffice not found — install it for PDF export, "
+                  "or pass --no-pdf to silence this).")
+            return None
         return pptx_to_pdf(pptx_path, pdf_path)
 
     @property

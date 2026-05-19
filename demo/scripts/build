@@ -10,6 +10,7 @@ The deck-dir must contain a build.py. The script delegates execution to it
 from __future__ import annotations
 
 import argparse
+import os
 import runpy
 import sys
 from pathlib import Path
@@ -20,12 +21,17 @@ from _common import fail
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("deck_dir", type=Path)
+    ap.add_argument("--no-pdf", action="store_true",
+                    help="Skip PDF export even if LibreOffice is available.")
     args = ap.parse_args()
 
     deck_dir = args.deck_dir.expanduser().resolve()
     build = deck_dir / "build.py"
     if not build.exists():
         fail(f"no build.py in {deck_dir}")
+
+    if args.no_pdf:
+        os.environ["SLIDER_NO_PDF"] = "1"
 
     sys.path.insert(0, str(deck_dir))   # so `import data` works
     print(f"building {deck_dir}/")

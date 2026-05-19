@@ -8,15 +8,14 @@ Voir [`README.md`](./README.md) pour la vue d'ensemble.
 
 - **Charte = source de vérité.** Toute couleur / font dans un slide doit venir de `chartes/<marque>/tokens.*` — jamais de hex hardcodé dans un layout ou un build.
 - **Données séparées du rendu.** `data.py` décrit le contenu, le layout choisit la composition, la charte fixe le look.
-- **Pipeline iso PPTX → PDF.** Le PPTX est la source canonique. LibreOffice headless le convertit en PDF — c'est ce que PowerPoint affichera en l'ouvrant.
-- **Skill cloisonné par défaut.** L'install via `demo/install.sh` reste dans la mission (`<mission>/.claude/skills/` + `demo/bin/`), pas dans les dossiers home globaux.
-- **Engine ≠ thèmes ≠ decks.** Ce repo est le **moteur** uniquement. Les chartes clients vivent dans des repos séparés (`otomata-tech/slider-<client>`) et sont découvertes via `SLIDER_THEMES_PATH`. Les decks (livrables) vivent dans la mission, jamais ici.
+- **Python natif, pas de DSL.** Pas de YAML / JSON config intermédiaire. Le contenu est du Python (dicts) car a) `python-pptx` impose Python, b) l'agent écrit Python aussi facilement que YAML, c) signatures typées des `render()` = contrat lisible.
+- **PDF optionnel.** Le PPTX est la source canonique ; le PDF est rendu via LibreOffice si présent, skippé proprement sinon. Ne jamais faire dépendre la pipeline de build de LO.
+- **Self-contained.** Le repo est utilisable tel quel : `cd slider && claude` détecte le skill via `.claude/skills/slide-craft → demo/` (symlink committé). Les thèmes clients sont des repos séparés clonés DANS `chartes/<client>/`.
 
 ## Stack
 
 - `python-pptx` — construction du PPTX
-- LibreOffice (`soffice`) — PPTX → PDF (avec retry sur profil isolé si la passe rapide échoue, cf. `lib/pdf_export.py`)
-- PyMuPDF (`fitz`) — inspection / previews PDF à la demande (pas dans le pipeline de build)
+- LibreOffice (`soffice`) — PPTX → PDF (optionnel, cf. `lib/pdf_export.py` ; retry sur profil isolé si la passe rapide échoue)
 - `Pillow` — inspection d'images
 
 Aucun service externe, aucun bundler.
@@ -40,15 +39,14 @@ Aucun service externe, aucun bundler.
 ## Découverte des chartes
 
 `Charte.load(name)` cherche dans cet ordre :
-1. Chemins dans `$SLIDER_THEMES_PATH` (séparés par `:`) — pour les thèmes clients externes (`slider-<client>` repos)
-2. `$PWD/chartes/` — pour les overrides mission-locales
-3. `<engine>/chartes/` — built-ins de l'engine (`blank` seulement, comme placeholder)
+1. `$PWD/chartes/` — overrides locaux quand on lance la CLI hors du repo slider
+2. `<engine>/chartes/` — chartes du repo (où les thèmes clients sont clonés)
 
-`slide-craft list-chartes` itère ces chemins et dédupliqe par nom (premier-vu gagne, matche la priorité de `load`).
+`slide-craft list-chartes` itère ces chemins et dédupliqe par nom (premier-vu gagne).
 
-## Decks (livrables — hors engine)
+## Decks
 
-Le moteur ne contient **pas** de decks. Quand un user/Claude lance `slide-craft new mon-deck`, le scaffold va dans `$PWD/decks/mon-deck/`. Les decks existants pour cette mission sont dans `<mission>/decks/` (`<la-fabrique-by-ca>/decks/`).
+`slide-craft new mon-deck` scaffolde dans `$PWD/decks/mon-deck/`. Que ce soit lancé depuis le repo slider ou ailleurs (mission, sandbox), le cwd détermine où atterrissent les decks.
 
 ## Conventions
 

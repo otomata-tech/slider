@@ -3,6 +3,11 @@ __pycache__/
 .venv/
 node_modules/
 
+# Client themes are cloned into chartes/<client>/ as separate repos.
+# Only the built-in `blank` placeholder is tracked.
+chartes/*
+!chartes/blank/
+
 # Generated outputs are regenerable via `slide-craft build <deck>`
 decks/*/out/
 
@@ -13,9 +18,6 @@ preview-*.png
 # Large source files (originals from clients)
 decks/*/source/*.pptx.bak
 decks/*/source/*.docx.bak
-
-# Mission-scoped install artifacts
-demo/bin/
 
 # OS
 .DS_Store

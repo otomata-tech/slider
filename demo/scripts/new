@@ -77,7 +77,8 @@ def main():
     print(f"PPTX → {{pptx}}  ({{deck.pages}} slides)")
 
     pdf = deck.export_pdf(pptx, OUT / "deck.pdf")
-    print(f"PDF  → {{pdf}}")
+    if pdf:
+        print(f"PDF  → {{pdf}}")
 
 
 if __name__ == "__main__":

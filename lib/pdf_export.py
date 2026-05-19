@@ -28,11 +28,16 @@ SOFFICE_CANDIDATES = [
 ]
 
 
-def _resolve_soffice() -> str:
+def soffice_path() -> str | None:
+    """Return path to LibreOffice if present, else None. Never raises."""
     for p in SOFFICE_CANDIDATES:
         if os.path.exists(p):
             return p
-    found = shutil.which("soffice") or shutil.which("libreoffice")
+    return shutil.which("soffice") or shutil.which("libreoffice")
+
+
+def _resolve_soffice() -> str:
+    found = soffice_path()
     if not found:
         raise RuntimeError(
             "LibreOffice not found. Install it to enable PPTX → PDF conversion:\n"

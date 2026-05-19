@@ -18,7 +18,6 @@ Usage:
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -26,28 +25,28 @@ from typing import Any
 from pptx.dml.color import RGBColor
 
 
-# Built-in chartes shipped with the engine (only generic ones — `blank` etc.)
+# Chartes live as subdirs of the engine's chartes/. Theme repos are cloned
+# directly into this dir (e.g. `git clone <theme> chartes/<client>`), making
+# slider self-contained as a working directory.
 ENGINE_CHARTES = Path(__file__).resolve().parent.parent / "chartes"
 
 
 def _theme_search_paths() -> list[Path]:
     """Resolve directories to search for chartes, in priority order.
 
-    1. ``$SLIDER_THEMES_PATH`` — colon-separated list, for external theme repos
-       (typically clones of ``otomata-tech/slider-<client>``).
-    2. ``$PWD/chartes`` — mission-local overrides.
-    3. Engine built-ins (the ``chartes/`` shipped with slider itself — usually
-       just ``blank`` plus any sample).
+    1. ``$PWD/chartes`` — local overrides when slide-craft is run from a
+       directory that has its own chartes/ (rare).
+    2. Engine's ``chartes/`` — where theme repos are cloned into.
     """
-    paths: list[Path] = []
-    env = os.environ.get("SLIDER_THEMES_PATH", "")
-    for raw in env.split(":"):
-        raw = raw.strip()
-        if raw:
-            paths.append(Path(raw).expanduser())
-    paths.append(Path.cwd() / "chartes")
-    paths.append(ENGINE_CHARTES)
-    return paths
+    paths = [Path.cwd() / "chartes", ENGINE_CHARTES]
+    # Dedup if cwd happens to be the engine itself.
+    seen, out = set(), []
+    for p in paths:
+        rp = p.resolve()
+        if rp not in seen:
+            seen.add(rp)
+            out.append(p)
+    return out
 
 
 def _hex_to_rgb(hex_str: str) -> RGBColor:
@@ -87,8 +86,8 @@ class Charte:
         roots_listed = "\n  - ".join(str(p) for p in search)
         raise FileNotFoundError(
             f"Charte '{name}' not found. Searched:\n  - {roots_listed}\n"
-            "Tip: set SLIDER_THEMES_PATH to point at the directory containing your "
-            "client charte (e.g. ~/dev/slider-<client>/chartes)."
+            f"Tip: clone the theme repo into chartes/{name}/ "
+            f"(e.g. `git clone <theme-repo> chartes/{name}`)."
         )
 
     @classmethod
