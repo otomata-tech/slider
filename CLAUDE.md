@@ -10,6 +10,7 @@ Voir [`README.md`](./README.md) pour la vue d'ensemble.
 - **Données séparées du rendu.** `data.py` décrit le contenu, le layout choisit la composition, la charte fixe le look.
 - **Pipeline iso PPTX → PDF.** Le PPTX est la source canonique. LibreOffice headless le convertit en PDF — c'est ce que PowerPoint affichera en l'ouvrant.
 - **Skill cloisonné par défaut.** L'install via `demo/install.sh` reste dans la mission (`<mission>/.claude/skills/` + `demo/bin/`), pas dans les dossiers home globaux.
+- **Engine ≠ thèmes ≠ decks.** Ce repo est le **moteur** uniquement. Les chartes clients vivent dans des repos séparés (`otomata-tech/slider-<client>`) et sont découvertes via `SLIDER_THEMES_PATH`. Les decks (livrables) vivent dans la mission, jamais ici.
 
 ## Stack
 
@@ -36,10 +37,18 @@ Aucun service externe, aucun bundler.
 | `agenda_list`      | rail vertical horaire / activité / détail               |
 | `text_image`       | 50/50 photo + bullets (côté configurable)               |
 
-## Decks d'exemple (`decks/`)
+## Découverte des chartes
 
-- `ca-events-strategiques` — benchmark 29 events CA (vitrine `cover_split` + `section_divider` + `event_fiche`)
-- `la-fabrique-team-building` — 9 slides factices (vitrine des 6 autres masques)
+`Charte.load(name)` cherche dans cet ordre :
+1. Chemins dans `$SLIDER_THEMES_PATH` (séparés par `:`) — pour les thèmes clients externes (`slider-<client>` repos)
+2. `$PWD/chartes/` — pour les overrides mission-locales
+3. `<engine>/chartes/` — built-ins de l'engine (`blank` seulement, comme placeholder)
+
+`slide-craft list-chartes` itère ces chemins et dédupliqe par nom (premier-vu gagne, matche la priorité de `load`).
+
+## Decks (livrables — hors engine)
+
+Le moteur ne contient **pas** de decks. Quand un user/Claude lance `slide-craft new mon-deck`, le scaffold va dans `$PWD/decks/mon-deck/`. Les decks existants pour cette mission sont dans `<mission>/decks/` (`<la-fabrique-by-ca>/decks/`).
 
 ## Conventions
 

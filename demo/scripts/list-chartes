@@ -1,27 +1,40 @@
 #!/usr/bin/env python3
-"""List available brand chartes with summary tokens."""
+"""List brand chartes findable via SLIDER_THEMES_PATH + built-ins."""
 import json
-from _common import CHARTES, ok
+import os
+import sys
+
+from _common import PROJECT
 
 
 def main():
+    sys.path.insert(0, str(PROJECT))
+    from lib.charte import Charte, _theme_search_paths
+
+    chartes = Charte.discover()
+    if not chartes:
+        print("No charte found.")
+        print()
+        print("Searched paths:")
+        for p in _theme_search_paths():
+            mark = "✓" if p.exists() else "✗"
+            print(f"  {mark} {p}")
+        print()
+        print("Tip: export SLIDER_THEMES_PATH=<path-to-your-theme-repo>/chartes")
+        sys.exit(1)
+
     print("Available chartes (marques) :")
     print()
-    for d in sorted(CHARTES.iterdir()):
-        if not d.is_dir():
-            continue
-        tokens_path = d / "tokens.json"
-        if not tokens_path.exists():
-            continue
-        t = json.loads(tokens_path.read_text())
-        primary = t.get("colors", {}).get("primary", {}).get("value", "—")
-        font    = t.get("fonts", {}).get("primary", {}).get("family", "—")
-        label   = t.get("label", d.name)
-        print(f"  • {d.name}")
+    for name, root in chartes:
+        tokens = json.loads((root / "tokens.json").read_text())
+        primary = tokens.get("colors", {}).get("primary", {}).get("value", "—")
+        font    = tokens.get("fonts", {}).get("primary", {}).get("family", "—")
+        label   = tokens.get("label", name)
+        print(f"  • {name}")
         print(f"      label   : {label}")
         print(f"      primary : #{primary.lstrip('#')}")
         print(f"      font    : {font}")
-        print(f"      path    : {d}")
+        print(f"      path    : {root}")
         print()
 
 

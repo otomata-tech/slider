@@ -26,7 +26,28 @@ from typing import Any
 from pptx.dml.color import RGBColor
 
 
-CHARTES_ROOT = Path(__file__).resolve().parent.parent / "chartes"
+# Built-in chartes shipped with the engine (only generic ones — `blank` etc.)
+ENGINE_CHARTES = Path(__file__).resolve().parent.parent / "chartes"
+
+
+def _theme_search_paths() -> list[Path]:
+    """Resolve directories to search for chartes, in priority order.
+
+    1. ``$SLIDER_THEMES_PATH`` — colon-separated list, for external theme repos
+       (typically clones of ``otomata-tech/slider-<client>``).
+    2. ``$PWD/chartes`` — mission-local overrides.
+    3. Engine built-ins (the ``chartes/`` shipped with slider itself — usually
+       just ``blank`` plus any sample).
+    """
+    paths: list[Path] = []
+    env = os.environ.get("SLIDER_THEMES_PATH", "")
+    for raw in env.split(":"):
+        raw = raw.strip()
+        if raw:
+            paths.append(Path(raw).expanduser())
+    paths.append(Path.cwd() / "chartes")
+    paths.append(ENGINE_CHARTES)
+    return paths
 
 
 def _hex_to_rgb(hex_str: str) -> RGBColor:
@@ -49,12 +70,42 @@ class Charte:
 
     @classmethod
     def load(cls, name: str, *, root: Path | None = None) -> "Charte":
-        base = (root or CHARTES_ROOT) / name
-        tokens_path = base / "tokens.json"
-        if not tokens_path.exists():
-            raise FileNotFoundError(f"Charte not found: {tokens_path}")
-        tokens = json.loads(tokens_path.read_text(encoding="utf-8"))
-        return cls(name=name, root=base, tokens=tokens)
+        """Load a charte by name. Searches multiple roots — see
+        :func:`_theme_search_paths`. Pass ``root`` to override search.
+        """
+        if root is not None:
+            search = [Path(root)]
+        else:
+            search = _theme_search_paths()
+
+        for base_root in search:
+            tokens_path = base_root / name / "tokens.json"
+            if tokens_path.exists():
+                tokens = json.loads(tokens_path.read_text(encoding="utf-8"))
+                return cls(name=name, root=base_root / name, tokens=tokens)
+
+        roots_listed = "\n  - ".join(str(p) for p in search)
+        raise FileNotFoundError(
+            f"Charte '{name}' not found. Searched:\n  - {roots_listed}\n"
+            "Tip: set SLIDER_THEMES_PATH to point at the directory containing your "
+            "client charte (e.g. ~/dev/slider-<client>/chartes)."
+        )
+
+    @classmethod
+    def discover(cls) -> list[tuple[str, Path]]:
+        """Return [(name, root)] of all chartes findable across search paths.
+        Used by `slide-craft list-chartes`. Stable order, deduped by name
+        (first-seen wins, matching `load()` priority).
+        """
+        seen: dict[str, Path] = {}
+        for base in _theme_search_paths():
+            if not base.exists():
+                continue
+            for d in sorted(base.iterdir()):
+                if d.is_dir() and (d / "tokens.json").exists():
+                    if d.name not in seen:
+                        seen[d.name] = d
+        return list(seen.items())
 
     # ------------------------------------------------------------------ colors
 

@@ -1,80 +1,120 @@
 # slider
 
-Produit des decks PowerPoint propres (PPTX + PDF) à partir d'une **charte client** et d'une **bibliothèque de masques** (layouts) réutilisables.
+Moteur de production de decks PowerPoint propres (PPTX + PDF) à partir d'une **charte client** et d'une **bibliothèque de masques** (layouts) réutilisables.
 
-Pas un framework — un atelier : tokens de marque + layouts + scripts qui sortent `deck.pptx` + `deck.pdf` à partir d'une structure de données Python.
+Pas un framework — un atelier : tokens de marque + layouts + CLI qui sortent `deck.pptx` + `deck.pdf` à partir d'une structure de données Python.
 
-## Structure
+## Architecture en 3 couches
+
+```
+┌──────────────────────────────┐
+│  Engine (ce repo)            │   slider — code + masques + charte blank
+│  - lib/ layouts/ demo/       │   public-ish, réutilisable client à client
+│  - chartes/blank/            │
+└──────────────────────────────┘
+                ▲
+                │ SLIDER_THEMES_PATH
+                │
+┌──────────────────────────────┐
+│  Thèmes clients              │   slider-<client> — un repo par marque
+│  chartes/<client>/           │   privé, partageable au client
+│  + tokens.json + assets      │   ex: otomata-tech/slider-credit-agricole
+└──────────────────────────────┘
+                ▲
+                │ $PWD
+                │
+┌──────────────────────────────┐
+│  Decks (livrables)           │   dans la mission qui les produit
+│  <mission>/decks/<nom>/      │   ex: <la-fabrique>/decks/mon-bench/
+│  data.py + build.py + out/   │   data + assemblage + sorties
+└──────────────────────────────┘
+```
+
+L'engine ne dépend de rien. Un thème ne dépend que de l'engine (sans code). Un deck dépend des deux et vit dans la mission.
+
+## Structure du repo
 
 ```
 slider/
-├── chartes/              kits de marque (un dossier par marque)
-│   └── credit-agricole/  tokens.json + .css + .py + assets (logos, fonts, photo)
-│
-├── layouts/              bibliothèque de masques de slides
-│   ├── README.md         catalogue avec previews PNG
-│   ├── cover_split.py
-│   ├── section_divider.py
-│   └── event_fiche.py
-│
 ├── lib/                  code Python importable
 │   ├── pptx_helpers.py   primitives bas niveau
-│   ├── charte.py         Charte.load("credit-agricole")
+│   ├── charte.py         Charte.load() + résolution multi-chemin
 │   ├── deck.py           Deck() + add(layout) + save + export
-│   └── pdf_export.py     PPTX → soffice → PDF → PNG previews
+│   └── pdf_export.py     PPTX → soffice → PDF (avec isolation profil LO)
 │
-├── decks/                decks concrets (data + outputs)
-│   └── ca-events-strategiques/
-│       ├── data.py
-│       ├── build.py
-│       └── out/          deck.pptx + deck.pdf
+├── layouts/              bibliothèque de masques (9 actuellement)
+│   ├── cover_split.py    section_divider.py    event_fiche.py
+│   ├── image_full.py     quote.py              portrait_grid.py
+│   └── big_number.py     agenda_list.py        text_image.py
 │
-└── demo/                 ZONE D'INSTALL (cloisonnée)
+├── chartes/
+│   └── blank/            charte placeholder (à copier pour un nouveau client)
+│
+└── demo/                 SKILL + CLI
     ├── SKILL.md          manifest skill Claude Code
-    ├── scripts/          CLI (slide-craft, list-chartes, build-deck, …)
+    ├── scripts/          CLI (slide-craft new / build / extract-pptx)
     ├── guides/           workflows pas-à-pas
     ├── install.sh        crée les symlinks (mission-scoped)
-    ├── uninstall.sh
     └── activate.sh       active la CLI dans la session shell
 ```
 
-## Installation cloisonnée (par défaut)
+## Installation
+
+### A. Le moteur (slider)
 
 ```bash
-./demo/install.sh
-source demo/activate.sh
-slide-craft list-chartes
+git clone git@github.com:otomata-tech/slider.git ~/dev/slider
+cd ~/dev/slider
+./demo/install.sh           # symlinks dans <cwd>/.claude/skills/ + demo/bin/
 ```
 
-Ne touche pas à `~/.claude/skills/` ni `~/.local/bin/`. Tout est confiné à la mission :
+### B. Un thème client
 
-- **Skill Claude Code** → `<mission>/.claude/skills/slide-craft` (détecté quand Claude tourne dans la mission)
-- **CLI** → `demo/bin/slide-craft` (ajouté au `PATH` via `activate.sh`)
+```bash
+git clone git@github.com:otomata-tech/slider-credit-agricole.git ~/dev/slider-credit-agricole
+echo 'export SLIDER_THEMES_PATH="$HOME/dev/slider-credit-agricole/chartes"' >> ~/.zshrc
 
-Pour installer en global (utilisable hors mission), voir [`INSTALL.md`](./INSTALL.md).
+# Polices à déposer pour LibreOffice
+cp ~/dev/slider-credit-agricole/chartes/credit-agricole/assets/fonts/Raleway*.ttf \
+   ~/Library/Fonts/                # macOS
+# (Linux : ~/.fonts/ puis fc-cache -f ~/.fonts/)
+```
+
+### C. Pré-requis système
+
+- Python 3.11+ avec `python-pptx`, `PyMuPDF`, `Pillow`
+- LibreOffice :
+  - macOS : `brew install --cask libreoffice`
+  - Linux : `apt install libreoffice-impress libreoffice-writer`
+
+Détails complets dans [`INSTALL.md`](./INSTALL.md).
 
 ## Workflow type
 
 ```bash
-slide-craft list-chartes
-slide-craft list-layouts
+cd <ta-mission>
+source ~/dev/slider/demo/activate.sh
+
+slide-craft list-chartes              # voit les thèmes via SLIDER_THEMES_PATH
+slide-craft list-layouts              # 9 masques disponibles
 slide-craft new mon-deck --charte=credit-agricole
-# édite decks/mon-deck/data.py + build.py
-slide-craft build decks/mon-deck
+                                      # → ./decks/mon-deck/ dans cwd
+slide-craft build decks/mon-deck      # → out/deck.pptx + out/deck.pdf
 ```
 
-Sortie : `decks/mon-deck/out/deck.pptx` + `deck.pdf`.
+Pour mettre au propre un PPTX existant : voir [`demo/guides/01-cleanup-existing.md`](./demo/guides/01-cleanup-existing.md).
 
-Pour mettre au propre un PPTX existant : [`demo/guides/01-cleanup-existing.md`](./demo/guides/01-cleanup-existing.md).
+## Ajouter un nouveau client
 
-## Pré-requis
+```bash
+# 1. Fork le placeholder
+cp -r chartes/blank ../slider-<client>/chartes/<client>
+# édite tokens.json, dépose logos/fonts dans assets/
 
-- Python 3.11+ avec `python-pptx`, `PyMuPDF`, `Pillow`
-- LibreOffice (rendu PPTX → PDF) — `libreoffice-impress` + `libreoffice-writer` (Linux) ou `brew install --cask libreoffice` (macOS)
-- Polices de la charte installées système (voir `chartes/<nom>/README.md`)
+# 2. Publie le thème dans son propre repo
+cd ../slider-<client>
+git init -b main && git add . && git commit -m "init: charte <client>"
+gh repo create otomata-tech/slider-<client> --private --source=. --push
+```
 
-Détails dans [`INSTALL.md`](./INSTALL.md).
-
-## Decks existants
-
-- [`decks/ca-events-strategiques`](./decks/ca-events-strategiques/) — Benchmark 29 événements stratégiques pour Crédit Agricole (mai 2026).
+Voir [`demo/guides/04-add-charte.md`](./demo/guides/04-add-charte.md).

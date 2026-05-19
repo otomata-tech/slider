@@ -1,24 +1,41 @@
 # Installation
 
-Slide-craft est multi-plateforme (Linux, macOS, Windows). Trois choses à installer : **Python deps**, **LibreOffice**, et le **symlink du skill**.
+Slider est multi-plateforme (Linux, macOS, Windows). Trois choses à installer : **le moteur**, **un (ou plusieurs) thèmes clients**, et **les pré-requis système** (LibreOffice + Python).
+
+L'architecture est en 3 couches indépendantes (voir [`README.md`](./README.md)) :
+- **engine** : `otomata-tech/slider` (ce repo)
+- **thème** : `otomata-tech/slider-<client>` (1 repo par client)
+- **decks** : dans la mission (`<mission>/decks/<nom>/`)
 
 ---
 
-## 1. Cloner le projet
+## 1. Cloner le moteur
 
 ```bash
-git clone <repo-url> ~/dev/slide-craft   # ou autre chemin de ton choix
-cd ~/dev/slide-craft
+git clone git@github.com:otomata-tech/slider.git ~/dev/slider
+cd ~/dev/slider
+```
+
+## 2. Cloner les thèmes clients
+
+```bash
+git clone git@github.com:otomata-tech/slider-credit-agricole.git ~/dev/slider-credit-agricole
+# (et autres thèmes ultérieurement)
+
+# Exposer les thèmes à slider — chemin vers les `chartes/`
+echo 'export SLIDER_THEMES_PATH="$HOME/dev/slider-credit-agricole/chartes"' >> ~/.zshrc
+# (Pour plusieurs thèmes, séparer par ':'  ex: "/path/a/chartes:/path/b/chartes")
+source ~/.zshrc
 ```
 
 ---
 
-## 2. Python deps
+## 3. Python deps
 
-Python 3.11+ requis (3.13 testé).
+Python 3.11+ requis (3.13 / 3.14 testés).
 
 ```bash
-pip install --user python-pptx PyMuPDF Pillow
+pip install --user --break-system-packages python-pptx PyMuPDF Pillow
 ```
 
 Ou via un venv si tu préfères :
@@ -30,7 +47,7 @@ pip install python-pptx PyMuPDF Pillow
 
 ---
 
-## 3. LibreOffice (rendu PPTX → PDF)
+## 4. LibreOffice (rendu PPTX → PDF)
 
 Le pipeline utilise LibreOffice en mode headless pour convertir le PPTX en PDF. Indispensable même si tu n'as pas l'app ouverte.
 
@@ -56,22 +73,22 @@ Le binaire est dans `/Applications/LibreOffice.app/Contents/MacOS/soffice`. Le m
 
 ---
 
-## 4. Polices des chartes
+## 5. Polices des chartes
 
-Les chartes embarquent leurs polices dans `chartes/<nom>/assets/fonts/`. Pour que LibreOffice les utilise au rendu, elles doivent être installées au niveau OS.
+Chaque thème embarque ses polices dans `<theme>/chartes/<nom>/assets/fonts/`. Pour que LibreOffice les utilise au rendu, elles doivent être installées au niveau OS.
 
 ### Linux
 
 ```bash
-mkdir -p ~/.fonts/<charte>
-cp chartes/<charte>/assets/fonts/*.ttf ~/.fonts/<charte>/
+mkdir -p ~/.fonts/<nom>
+cp ~/dev/slider-<client>/chartes/<nom>/assets/fonts/*.ttf ~/.fonts/<nom>/
 fc-cache -f ~/.fonts/
 ```
 
 ### macOS
 
 ```bash
-cp chartes/<charte>/assets/fonts/*.ttf ~/Library/Fonts/
+cp ~/dev/slider-<client>/chartes/<nom>/assets/fonts/*.ttf ~/Library/Fonts/
 ```
 
 Pas de cache à reconstruire.
@@ -82,29 +99,26 @@ Double-clic sur chaque `.ttf` → "Installer". Ou clic droit → "Installer pour
 
 ---
 
-## 5. Installer le skill pour Claude Code
+## 6. Installer le skill Claude Code + la CLI
+
+Un seul script installe les deux (skill scoped à la mission + CLI mission-scoped) :
 
 ```bash
-# Linux + macOS
-ln -s "$PWD/demo-skill" ~/.claude/skills/slide-craft
-
-# Windows (PowerShell admin)
-New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.claude\skills\slide-craft" -Target "$PWD\demo-skill"
+cd ~/dev/slider
+./demo/install.sh
 ```
 
-Claude Code détecte le skill au prochain démarrage de session. Vérifie avec `/help` ou en lançant une session — `slide-craft` doit apparaître dans la liste.
+Effet :
+- **Skill** → `<cwd>/.claude/skills/slide-craft` (Claude Code le détecte quand il tourne ici)
+- **CLI** → `<repo>/demo/bin/slide-craft`
 
----
-
-## 6. CLI accessible depuis le terminal
-
-L'étape 5 installe le skill **pour Claude Code**. Pour pouvoir taper `slide-craft` **toi-même au terminal**, il faut un deuxième lien dans un dossier qui est dans ton `$PATH`.
+Pour avoir `slide-craft` dans le shell sans préfixe, soit utiliser `source demo/activate.sh` (scope session), soit symlinker manuellement :
 
 ### Linux
 
 ```bash
 mkdir -p ~/.local/bin
-ln -s "$PWD/demo-skill/scripts/slide-craft" ~/.local/bin/slide-craft
+ln -s "$PWD/demo/bin/slide-craft" ~/.local/bin/slide-craft
 ```
 
 `~/.local/bin/` est dans le PATH par défaut sur la plupart des distros.
@@ -113,10 +127,10 @@ ln -s "$PWD/demo-skill/scripts/slide-craft" ~/.local/bin/slide-craft
 
 `~/.local/bin/` n'est **pas** dans le PATH par défaut. Deux options :
 
-**Option A — ajouter `~/.local/bin/` au PATH** (recommandé, plus propre) :
+**Option A — ajouter `~/.local/bin/` au PATH** (recommandé) :
 ```bash
 mkdir -p ~/.local/bin
-ln -s "$PWD/demo-skill/scripts/slide-craft" ~/.local/bin/slide-craft
+ln -s "$PWD/demo/bin/slide-craft" ~/.local/bin/slide-craft
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
@@ -124,7 +138,7 @@ source ~/.zshrc
 **Option B — utiliser un dossier déjà dans le PATH** :
 ```bash
 # Apple Silicon (M1/M2/M3) :
-ln -s "$PWD/demo-skill/scripts/slide-craft" /opt/homebrew/bin/slide-craft
+ln -s "$PWD/demo/bin/slide-craft" /opt/homebrew/bin/slide-craft
 
 # Mac Intel :
 sudo ln -s "$PWD/demo-skill/scripts/slide-craft" /usr/local/bin/slide-craft
@@ -132,7 +146,7 @@ sudo ln -s "$PWD/demo-skill/scripts/slide-craft" /usr/local/bin/slide-craft
 
 ### Windows
 
-Ajouter `<repo>/demo-skill/scripts/` à `PATH` (Système → Variables d'environnement).
+Ajouter `<repo>/demo/bin/` à `PATH` (Système → Variables d'environnement).
 
 ### Vérification
 
@@ -146,18 +160,21 @@ slide-craft help         # doit afficher l'aide
 ## 7. Test
 
 ```bash
-slide-craft help
+cd <ta-mission>
+source ~/dev/slider/demo/activate.sh
 slide-craft list-chartes
 slide-craft list-layouts
 ```
 
-Si tu vois la liste des chartes (credit-agricole) et des masques (cover_split, section_divider, event_fiche), tout est bon.
+Si `list-chartes` montre `credit-agricole` (via SLIDER_THEMES_PATH) + `blank` (built-in), et `list-layouts` montre les 9 masques, tout est bon.
 
-Pour un test bout-en-bout :
+Pour un test bout-en-bout, scaffolder un mini-deck :
 
 ```bash
-slide-craft build decks/ca-events-strategiques
-# → decks/ca-events-strategiques/out/deck.pptx + deck.pdf
+slide-craft new test-deck --charte=credit-agricole
+# → ./decks/test-deck/
+slide-craft build decks/test-deck
+# → ./decks/test-deck/out/deck.pptx + deck.pdf
 ```
 
 ---
