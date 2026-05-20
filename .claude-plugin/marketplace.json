@@ -1,0 +1,16 @@
+{
+  "name": "slider-dev",
+  "owner": {
+    "name": "Otomata"
+  },
+  "metadata": {
+    "description": "Marketplace local de dev pour le plugin slider (moteur decks PPTX+PDF). Pour la distribution publique, le plugin est servi depuis otomata-tech/slider."
+  },
+  "plugins": [
+    {
+      "name": "slider",
+      "source": "./",
+      "description": "Moteur decks PPTX+PDF avec charte client + masques réutilisables. Skills `install` et `slide-craft`."
+    }
+  ]
+}

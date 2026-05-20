@@ -8,13 +8,28 @@ Pas un framework — un atelier : tokens de marque + layouts + CLI qui sortent `
 
 Pré-requis : [Claude Code](https://claude.ai/code) installé.
 
+### Option A — Plugin Claude Code (recommandé)
+
+```bash
+claude plugin marketplace add otomata-tech/slider
+claude plugin install slider@slider-dev
+```
+
+Les skills `install` et `slide-craft` sont alors disponibles dans toutes tes sessions. Pour mettre à jour : `claude plugin update slider`.
+
+### Option B — Clone direct
+
 ```bash
 git clone git@github.com:otomata-tech/slider.git
 cd slider
 claude
 ```
 
-Puis dans Claude : *« installe slide-craft »*. Le skill `install` prend la main : il vérifie Python + `python-pptx` + `Pillow`, te propose d'installer LibreOffice (optionnel — pour l'export PDF), te demande si tu veux cloner un thème client (URL du repo) et active la CLI dans ton shell. Procédure manuelle de fallback dans [`INSTALL.md`](./INSTALL.md).
+Les skills sont auto-détectés via `.claude/skills/`. Pour récupérer les updates : `git pull`.
+
+### Ensuite, dans Claude
+
+Dis *« installe slide-craft »*. Le skill `install` prend la main : il vérifie Python + `python-pptx` + `Pillow`, te propose d'installer LibreOffice (optionnel — pour l'export PDF), te demande si tu veux cloner un thème client (URL du repo) et active la CLI dans ton shell. Procédure manuelle de fallback dans [`INSTALL.md`](./INSTALL.md).
 
 Une fois installé, tu peux dire à Claude :
 - *« crée un deck de pitch en 5 slides, charte `<nom>` »*
