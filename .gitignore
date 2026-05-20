@@ -11,6 +11,9 @@ chartes/*
 # Generated outputs are regenerable via `slide-craft build <deck>`
 decks/*/out/
 
+# Smoke-test and scratch decks (use prefix `test-` to opt into gitignore)
+decks/test-*/
+
 # Local previews
 preview-*.png
 *-screen.png
