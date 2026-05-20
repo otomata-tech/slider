@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""Extract text + images + layout hints from a .pdf into a workable folder.
+
+Usage:
+    slide-craft extract-pdf <source.pdf> <dest-dir>
+
+Produces:
+    <dest-dir>/
+      source.pdf                   # copy of the original
+      pages.txt                    # text per page (reading order)
+      media/                       # extracted images, named page-NN-img-MM.<ext>
+      manifest.json                # per-page structure: text blocks + image bboxes
+                                   # (page size in pt, bboxes in pt, image refs)
+
+Used by the `slide-craft` skill when the source deck is a PDF (rendered or
+exported from PowerPoint/Keynote/etc.). Lets the agent map each image back
+to its slide + position when composing the target PPTX.
+
+Requires: PyMuPDF (`pip install PyMuPDF` — module name `fitz`).
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import shutil
+import sys
+from pathlib import Path
+
+from _common import fail
+
+try:
+    import fitz  # PyMuPDF
+except ImportError:
+    fail(
+        "PyMuPDF (fitz) is required for extract-pdf. "
+        "Install with: pip install --user --break-system-packages PyMuPDF"
+    )
+
+
+def extract_page(page, page_num, media_dir):
+    """Extract text blocks + images from a single page. Returns dict for manifest."""
+    width  = float(page.rect.width)
+    height = float(page.rect.height)
+
+    # --- text blocks (reading order)
+    text_blocks = []
+    for blk in page.get_text("blocks"):
+        x0, y0, x1, y1, text, block_no, block_type = blk
+        text = text.strip()
+        if not text:
+            continue
+        text_blocks.append({
+            "bbox":  [round(x0, 1), round(y0, 1), round(x1, 1), round(y1, 1)],
+            "text":  text,
+        })
+
+    # --- images with their drawn bbox on this page
+    images = []
+    img_list = page.get_images(full=True)
+    for img_idx, img_info in enumerate(img_list, start=1):
+        xref = img_info[0]
+        # try to locate where the image is drawn on the page
+        bboxes = page.get_image_rects(xref)
+        # extract the actual pixel data
+        try:
+            ext_data = page.parent.extract_image(xref)
+            ext = ext_data["ext"]               # png, jpeg, etc.
+            data = ext_data["image"]
+        except Exception:
+            continue
+        fname = f"page-{page_num:02d}-img-{img_idx:02d}.{ext}"
+        (media_dir / fname).write_bytes(data)
+
+        for bbox in (bboxes or [None]):
+            images.append({
+                "file": f"media/{fname}",
+                "bbox": (
+                    [round(bbox.x0, 1), round(bbox.y0, 1),
+                     round(bbox.x1, 1), round(bbox.y1, 1)]
+                    if bbox else None
+                ),
+                "width_px":  ext_data.get("width"),
+                "height_px": ext_data.get("height"),
+            })
+
+    return {
+        "page":   page_num,
+        "size":   {"w_pt": round(width, 1), "h_pt": round(height, 1)},
+        "text":   text_blocks,
+        "images": images,
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("source", type=Path, help=".pdf to extract")
+    ap.add_argument("dest",   type=Path, help="destination directory")
+    args = ap.parse_args()
+
+    src: Path = args.source.expanduser().resolve()
+    dst: Path = args.dest.expanduser().resolve()
+
+    if not src.exists() or src.suffix.lower() != ".pdf":
+        fail(f"not a .pdf file: {src}")
+    dst.mkdir(parents=True, exist_ok=True)
+
+    # 1. copy original
+    shutil.copy2(src, dst / "source.pdf")
+
+    # 2. open + walk pages
+    media_dir = dst / "media"; media_dir.mkdir(exist_ok=True)
+    doc = fitz.open(src)
+
+    pages_data = []
+    pages_txt_lines = []
+    n_images = 0
+    for i, page in enumerate(doc, start=1):
+        meta = extract_page(page, i, media_dir)
+        pages_data.append(meta)
+        text = "\n".join(blk["text"] for blk in meta["text"])
+        pages_txt_lines.append(f"=== page {i} ({meta['size']['w_pt']} × {meta['size']['h_pt']} pt) ===\n{text}\n")
+        n_images += len(meta["images"])
+
+    # 3. write outputs
+    (dst / "pages.txt").write_text("\n".join(pages_txt_lines), encoding="utf-8")
+    (dst / "manifest.json").write_text(
+        json.dumps({
+            "source": src.name,
+            "pages":  pages_data,
+        }, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    # 4. report
+    n_pages = len(pages_data)
+    print(f"Extracted to {dst}")
+    print(f"  · {n_pages} pages   → pages.txt + manifest.json")
+    print(f"  · {n_images} images  → media/")
+    print(f"  · original kept as source.pdf")
+    print()
+    print("Next steps:")
+    print(f"  1. Inspect pages.txt + media/ to see what's there.")
+    print(f"  2. Use manifest.json[pages][N][images][M].bbox to know where each image goes.")
+    print(f"  3. slide-craft new <name> --charte=<...>   # scaffold a deck")
+    print(f"  4. Compose data.py + build.py wiring the images back into layouts.")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,6 +1,6 @@
 {
   "name": "slider",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Plugin Claude Code pour produire des decks PowerPoint propres (PPTX + PDF) à partir d'une charte client et d'une bibliothèque de masques (layouts) réutilisables. Skills : `install` (setup Python deps + LibreOffice + thèmes), `slide-craft` (composition de decks, mise au propre de PPTX existants, ajout de masques/chartes).",
   "author": {
     "name": "Alexis Laporte (Otomata)",
