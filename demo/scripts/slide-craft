@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# slide-craft — dispatcher that routes to scripts/<cmd>.
+# Lets users type `slide-craft list-layouts` instead of `scripts/list-layouts`.
+set -e
+
+# Resolve script path including symlinks — portable (Linux + BSD/macOS).
+# Mac's `readlink` lacks `-f`, so we use python3 (universally available with Xcode CLT).
+DIR="$(python3 -c 'import os, sys; print(os.path.dirname(os.path.realpath(sys.argv[1])))' "$0")"
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+  -h|--help|help|"")
+    cat <<EOF
+slide-craft — produce PPTX + PDF decks from a charte + layout library.
+
+Usage:
+  slide-craft list-layouts                       list available masques
+  slide-craft layout-info <name>                 show kwargs of a masque
+  slide-craft list-chartes                       list available marques
+  slide-craft extract-pptx <source.pptx> <dest>  extract text + assets
+  slide-craft new <name> [--charte=...]          scaffold a new deck
+  slide-craft build <deck-dir>                   build PPTX + PDF
+
+Workflows in $DIR/../guides/
+EOF
+    ;;
+  *)
+    script="$DIR/$cmd"
+    if [ ! -x "$script" ]; then
+      echo "slide-craft: unknown command '$cmd'. Run 'slide-craft help'." >&2
+      exit 2
+    fi
+    exec "$script" "$@"
+    ;;
+esac

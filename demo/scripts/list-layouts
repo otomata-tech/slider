@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+"""List available slide layouts (masques) with a one-line description."""
+import importlib
+import inspect
+import sys
+from pathlib import Path
+
+from _common import LAYOUTS, fail
+
+
+# Hard prerequisite — layouts won't import without python-pptx, fail loudly.
+try:
+    import pptx  # noqa: F401
+except ImportError:
+    fail(
+        "python-pptx is not installed.\n"
+        "  Install with:  pip install --user python-pptx PyMuPDF Pillow\n"
+        "  Or in a venv:  python3 -m venv .venv && source .venv/bin/activate "
+        "&& pip install python-pptx PyMuPDF Pillow"
+    )
+
+
+def first_doc_line(mod) -> str:
+    doc = inspect.getdoc(mod) or ""
+    return doc.splitlines()[0] if doc else "(no description)"
+
+
+def main():
+    print("Available layouts (catalogue):")
+    print()
+    print(f"  {'name':<20} {'description':<60}")
+    print(f"  {'-'*20} {'-'*60}")
+    errors = []
+    for py in sorted(LAYOUTS.glob("*.py")):
+        name = py.stem
+        if name.startswith("_"):
+            continue
+        try:
+            mod = importlib.import_module(f"layouts.{name}")
+        except Exception as e:
+            errors.append((name, e))
+            continue
+        print(f"  {name:<20} {first_doc_line(mod):<60}")
+    if errors:
+        print()
+        print("Layouts that failed to import:", file=sys.stderr)
+        for name, e in errors:
+            print(f"  · {name}: {type(e).__name__}: {e}", file=sys.stderr)
+        sys.exit(1)
+    print()
+    print(f"Full catalogue with previews: {LAYOUTS / 'README.md'}")
+
+
+if __name__ == "__main__":
+    main()

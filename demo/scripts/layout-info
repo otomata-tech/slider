@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Print signature + docstring for a single layout.
+
+Usage:
+    slide-craft layout-info <name>
+
+Lets an agent (or a human) discover the kwargs of a layout without reading
+the source. Outputs the module docstring (ASCII preview + usage example)
+followed by the kwargs of render(), each marked required or optional with
+its type and default.
+"""
+import importlib
+import inspect
+import sys
+
+from _common import LAYOUTS, fail
+
+
+try:
+    import pptx  # noqa: F401
+except ImportError:
+    fail(
+        "python-pptx is not installed.\n"
+        "  Install with:  pip install --user python-pptx PyMuPDF Pillow"
+    )
+
+
+def main():
+    if len(sys.argv) < 2:
+        avail = sorted(p.stem for p in LAYOUTS.glob("*.py")
+                       if not p.stem.startswith("_"))
+        fail("usage: slide-craft layout-info <name>\n"
+             f"  available: {', '.join(avail)}")
+
+    name = sys.argv[1]
+    py = LAYOUTS / f"{name}.py"
+    if not py.exists() or name.startswith("_"):
+        avail = sorted(p.stem for p in LAYOUTS.glob("*.py")
+                       if not p.stem.startswith("_"))
+        fail(f"unknown layout '{name}'.\n"
+             f"  available: {', '.join(avail)}")
+
+    mod = importlib.import_module(f"layouts.{name}")
+    render = getattr(mod, "render", None)
+    if render is None:
+        fail(f"layout '{name}' has no render() function")
+
+    print(f"# Layout: {name}")
+    print()
+    doc = inspect.getdoc(mod) or "(no module docstring)"
+    print(doc)
+    print()
+    print("## Signature")
+    print()
+
+    sig = inspect.signature(render)
+    required, optional = [], []
+    for pname, p in sig.parameters.items():
+        if pname in ("slide", "ca", "charte"):
+            continue  # injected positionally
+        if pname == "page_num":
+            continue  # auto-injected by Deck.add
+        annot = (inspect.formatannotation(p.annotation)
+                 if p.annotation is not inspect._empty else "Any")
+        if p.default is inspect._empty:
+            required.append(f"  {pname}: {annot}")
+        else:
+            default = repr(p.default)
+            optional.append(f"  {pname}: {annot} = {default}")
+
+    if required:
+        print("Required kwargs:")
+        for line in required:
+            print(line)
+        print()
+    if optional:
+        print("Optional kwargs:")
+        for line in optional:
+            print(line)
+        print()
+
+    print("Auto-injected (do not pass):")
+    print("  slide, charte  (positional, by Deck.add)")
+    print("  page_num       (by Deck.add, current slide index)")
+
+
+if __name__ == "__main__":
+    main()

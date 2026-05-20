@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+"""Scaffold a new deck directory in $PWD/decks/<name>/ (or a custom path).
+
+By default the deck is created in `<cwd>/decks/<name>/` so it lives next to
+your mission/project files — *not* inside the slider engine. Override with
+``--path``.
+
+Usage:
+    slide-craft new <name>                          # ./decks/<name>/
+    slide-craft new <name> --charte=credit-agricole
+    slide-craft new <name> --path=/abs/path/to/parent
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+from _common import PROJECT, fail
+
+
+TEMPLATE_DATA = '''"""Content for the deck — to be filled in.
+
+Each top-level dict matches the kwargs of a layout's render() function.
+Run `slide-craft list-layouts` to see what's available.
+
+Asset paths (photo / logos) are usually optional : the layouts auto-inject
+the charte's defaults from `chartes/<nom>/tokens.json#defaults`. Pass an
+explicit path only when you want to override.
+"""
+
+COVER = dict(
+    brand_label="...",
+    eyebrow="...",
+    title_lines=["...", "..."],
+    subtitle_lines=["..."],
+    accroche=["..."],
+    signoff="...",
+    # photo_path / logo_path / photo_caption auto-injected from charte
+)
+'''
+
+
+TEMPLATE_BUILD = '''"""Assemble the deck."""
+from __future__ import annotations
+import os, sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+
+# Locate the slider engine. Order:
+#   1. $SLIDER_ROOT environment variable (preferred — set by demo/activate.sh)
+#   2. hardcoded path written at scaffold time
+SLIDER = Path(os.environ.get("SLIDER_ROOT") or "{slider_root}")
+sys.path.insert(0, str(SLIDER))
+sys.path.insert(0, str(HERE))
+
+from lib.charte import Charte
+from lib.deck import Deck
+from layouts import cover_split  # + import other layouts as needed
+
+from data import COVER
+
+OUT = HERE / "out"
+
+
+def main():
+    ca = Charte.load("{charte}")
+    deck = Deck(charte=ca)
+
+    deck.add(cover_split.render, **COVER)
+    # TODO: add more slides — e.g.:
+    # deck.add(event_fiche.render, **EVENTS[0])
+
+    pptx = deck.save_pptx(OUT / "deck.pptx")
+    print(f"PPTX → {{pptx}}  ({{deck.pages}} slides)")
+
+    pdf = deck.export_pdf(pptx, OUT / "deck.pdf")
+    if pdf:
+        print(f"PDF  → {{pdf}}")
+
+
+if __name__ == "__main__":
+    main()
+'''
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("name")
+    ap.add_argument("--charte", default="blank",
+                    help="charte name (must be findable via SLIDER_THEMES_PATH "
+                         "or in slider/chartes/; run `slide-craft list-chartes`)")
+    ap.add_argument("--path", default=None, type=Path,
+                    help="parent dir (default: $PWD/decks/)")
+    args = ap.parse_args()
+
+    # Verify the charte exists in any of the search paths
+    sys.path.insert(0, str(PROJECT))
+    from lib.charte import Charte
+    try:
+        Charte.load(args.charte)
+    except FileNotFoundError as e:
+        fail(str(e))
+
+    parent = args.path.expanduser().resolve() if args.path else (Path.cwd() / "decks")
+    dest = parent / args.name
+    if dest.exists():
+        fail(f"already exists: {dest}")
+
+    dest.mkdir(parents=True)
+    (dest / "out").mkdir()
+    (dest / "assets").mkdir()
+    (dest / "data.py").write_text(TEMPLATE_DATA, encoding="utf-8")
+    (dest / "build.py").write_text(
+        TEMPLATE_BUILD.format(charte=args.charte, slider_root=PROJECT),
+        encoding="utf-8")
+
+    print(f"New deck scaffolded: {dest}")
+    print()
+    print("Next steps:")
+    print(f"  1. edit  {dest}/data.py    (fill content)")
+    print(f"  2. edit  {dest}/build.py   (compose layouts)")
+    print(f"  3. run   slide-craft build {dest}")
+
+
+if __name__ == "__main__":
+    main()
