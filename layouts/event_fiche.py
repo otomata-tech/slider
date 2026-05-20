@@ -2,7 +2,7 @@
 
 Visuel :
     ┌────────────────────────────────────────────────────┐
-    │ ▌ header bar + logo CA · brand · TAG · NN          │
+    │ ▌ header bar + brand logo · TAG · NN               │
     │                                                    │
     │ NAME EVENT                          [logo event]   │
     │ TITRE / ACCROCHE (grande typo)                     │
@@ -25,19 +25,19 @@ Visuel :
 
 Usage :
     event_fiche.render(slide, charte,
-        name="CHANGENOW",
-        title="LE PLUS GRAND ÉVÉNEMENT DE SOLUTIONS POUR LA PLANÈTE",
-        date="26 au 28 avril 2027", lieu="Grand Palais, Paris",
+        name="<EVENT NAME>",
+        title="ACCROCHE EN GRANDE TYPO",
+        date="<dates>", lieu="<lieu>",
         audience="...", taille="...", format="...", infos="...",
         speakers="..." (optional),
-        interets=["+500 médias présents", ...],
-        positionnement="Positionner le Crédit Agricole...",
+        interets=["bullet 1", ...],
+        positionnement="Positionner <marque> comme...",
         activations=[("Prise de parole", "keynote / panel"), ...],
         site="https://...",
         page_num=3,
-        section_tag="FRANCE",
-        logo_path=ca.asset(...) or None,
-        ca_logo_path=ca.asset("logo/ca-logo.jpg"),
+        section_tag="<TAG>",
+        logo_path=ch.asset(...) or None,
+        brand_logo_path=ch.asset("logo/main.png"),
         highlight="Édition anniversaire 10 ans")
 """
 from __future__ import annotations
@@ -68,21 +68,21 @@ def render(slide, ca, *,
            speakers: str | None = None,
            highlight: str | None = None,
            logo_path: str | None = None,
-           ca_logo_path: str | None = None):
+           brand_logo_path: str | None = None):
     """Render a single event card. See module docstring for layout.
 
-    `ca_logo_path` falls back to ``charte.default("header_logo")`` when None.
+    `brand_logo_path` falls back to ``charte.default("header_logo")`` when None.
     """
     # Auto-inject charte default header logo
-    if ca_logo_path is None:
-        ca_logo_path = ca.default("header_logo")
+    if brand_logo_path is None:
+        brand_logo_path = ca.default("header_logo")
 
     # white background
     add_rect(slide, 0, 0, SLIDE_W_CM, SLIDE_H_CM, fill=ca.color("bg"))
 
     draw_header(slide, ca,
                 page_num=page_num, section_tag=section_tag,
-                logo_path=ca_logo_path)
+                logo_path=brand_logo_path)
 
     # --- event logo (top-right of title area) ---
     logo_box_w, logo_box_h = 5.5, 2.0

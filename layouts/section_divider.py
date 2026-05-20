@@ -12,13 +12,13 @@ Visuel :
     │                                                    │
     │                                                 NN │
     └────────────────────────────────────────────────────┘
-    fond sarcelle foncé · texte blanc
+    fond `primary-deep` · texte blanc
 
 Usage :
     section_divider.render(slide, charte,
-        tag="FRANCE",
-        title="LES ÉVÉNEMENTS MAJEURS EN FRANCE",
-        subtitle="Leviers de notoriété & business...",
+        tag="PARTIE 1",
+        title="TITRE DE SECTION",
+        subtitle="Sous-titre descriptif optionnel...",
         page_num=2)
 """
 from __future__ import annotations

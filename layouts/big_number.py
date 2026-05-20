@@ -8,20 +8,20 @@ Visuel :
     │           1 4 0 +                                  │
     │       (giant centered, 200pt+)                     │
     │                                                    │
-    │       label en sarcelle bold                       │
+    │       label en `signature` bold                    │
     │                                                    │
     │       contexte / source en muted                   │
     │                                                    │
     │   ──────────────────────────────────── NN          │
     └────────────────────────────────────────────────────┘
-    Fond crème, KPI sarcelle deep géant. Slide narrative forte.
+    Fond `panel-cream`, KPI `primary-deep` géant. Slide narrative forte.
     Pas de header.
 
 Usage :
     big_number.render(slide, charte,
         value="140+",
-        label="participants à la journée",
-        context="Toutes équipes Fabrique réunies — Roland Garros, août 2026",
+        label="participants",
+        context="Contexte court — événement, lieu, date",
         eyebrow="EN UN CHIFFRE",     # optionnel
         page_num=7)
 """

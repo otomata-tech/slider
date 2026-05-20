@@ -20,9 +20,9 @@ class Deck:
     """A 16:9 widescreen deck under a single charte.
 
     Usage:
-        deck = Deck(Charte.load("credit-agricole"))
+        deck = Deck(Charte.load("blank"))
         deck.add(cover_split.render, brand_label=..., title_lines=..., ...)
-        deck.add(event_fiche.render, name="CHANGENOW", title="...", ...)
+        deck.add(event_fiche.render, name="<event>", title="...", ...)
         deck.save_pptx("out/deck.pptx")
         deck.export_pdf("out/deck.pdf")
     """

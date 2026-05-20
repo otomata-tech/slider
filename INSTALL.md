@@ -2,13 +2,16 @@
 
 Slider est multi-plateforme (Linux, macOS, Windows). Le modèle d'install est **un dossier = une instance prête à l'emploi** : on clone slider, on clone le(s) thème(s) dedans, on est bon.
 
+> Pour un parcours guidé, ouvre Claude Code depuis `slider/` et dis *« installe slide-craft »* — le skill `install` enchaîne les étapes ci-dessous interactivement. La procédure manuelle qui suit reste la source de vérité.
+
 ---
 
 ## 1. Cloner le moteur + un (ou plusieurs) thèmes
 
 ```bash
 git clone git@github.com:otomata-tech/slider.git
-git clone git@github.com:otomata-tech/slider-credit-agricole.git slider/chartes/credit-agricole
+# Thèmes (optionnel — exemple générique, remplace par l'URL de ton thème) :
+git clone git@github.com:<org>/slider-<client>.git slider/chartes/<client>
 # (autres thèmes plus tard, même pattern : clone DANS slider/chartes/<name>/)
 cd slider
 ```
@@ -65,14 +68,14 @@ Si tu utilises LibreOffice pour le PDF, installe les polices du thème côté OS
 ### Linux
 
 ```bash
-cp chartes/credit-agricole/assets/fonts/*.ttf ~/.fonts/
+cp chartes/<client>/assets/fonts/*.ttf ~/.fonts/
 fc-cache -f ~/.fonts/
 ```
 
 ### macOS
 
 ```bash
-cp chartes/credit-agricole/assets/fonts/*.ttf ~/Library/Fonts/
+cp chartes/<client>/assets/fonts/*.ttf ~/Library/Fonts/
 ```
 
 ### Windows
@@ -95,9 +98,9 @@ Active `slide-craft` comme commande pour la durée de la session. Pour persister
 ## 6. Test
 
 ```bash
-slide-craft list-chartes      # doit montrer blank + credit-agricole
+slide-craft list-chartes      # doit montrer blank (+ tes thèmes installés)
 slide-craft list-layouts      # 9 masques disponibles
-slide-craft new test-deck --charte=credit-agricole
+slide-craft new test-deck --charte=blank
 slide-craft build decks/test-deck
 # → decks/test-deck/out/deck.pptx (+ deck.pdf si LibreOffice installé)
 ```
@@ -132,7 +135,7 @@ Pas de framework lourd. Aucune dépendance sur des services externes.
 
 ```bash
 rm -rf slider                   # un dossier, tout est dedans
-rm -rf ~/.fonts/Raleway*        # Linux — optionnel
-rm ~/Library/Fonts/Raleway*     # macOS — optionnel
-# LibreOffice : laisse-le, utile pour d'autres choses
+# Si tu as installé des fonts d'un thème en système, les retirer manuellement
+# (chemin selon OS — voir étape 4).
+# LibreOffice : laisse-le, utile pour d'autres choses.
 ```

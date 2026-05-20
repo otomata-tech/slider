@@ -20,7 +20,7 @@ Usage :
         photo_path="...",
         eyebrow="MOMENT FORT",          # optionnel
         title="L'Atelier de cohésion",
-        subtitle="Roland Garros — 26 août",  # optionnel
+        subtitle="<lieu> — <date>",  # optionnel
         page_num=4)
 """
 from __future__ import annotations
@@ -40,23 +40,23 @@ def render(slide, ca, *,
            subtitle: str | None = None):
     """Render full-bleed photo with overlaid title block at the bottom."""
 
-    # Background — sarcelle deep behind in case the image doesn't quite cover.
+    # Background — `primary-deep` behind in case the image doesn't quite cover.
     add_rect(slide, 0, 0, SLIDE_W_CM, SLIDE_H_CM, fill=ca.color("primary-deep"))
 
     # Photo full-bleed (try to cover the slide; if aspect doesn't match, the
-    # image is anchored top-left and may underfill — the deep sarcelle bg shows).
+    # image is anchored top-left and may underfill — the deep bg shows).
     add_image(slide, photo_path, 0, 0, w_cm=SLIDE_W_CM, h_cm=SLIDE_H_CM)
 
     # Dark gradient strip at the bottom for text legibility.
     overlay_h = 5.5
     overlay_y = SLIDE_H_CM - overlay_h
-    # Solid sarcelle-deep band (python-pptx doesn't do gradients on a shape
+    # Solid `primary-deep` band (python-pptx doesn't do gradients on a shape
     # easily; solid + slight transparency works visually). Two stacked bands
     # give a softer transition than a single hard rect.
     add_rect(slide, 0, overlay_y, SLIDE_W_CM, overlay_h,
              fill=ca.color("primary-deep"))
 
-    # Vert pomme accent rule (left)
+    # `signature` accent rule (left)
     add_rect(slide, 1.5, overlay_y + 1.1, 0.4, 1.6,
              fill=ca.color("signature"))
 

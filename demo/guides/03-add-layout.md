@@ -78,7 +78,7 @@ from lib.charte import Charte
 from lib.deck import Deck
 from layouts import <nom>
 
-ca = Charte.load("credit-agricole")
+ca = Charte.load("blank")
 deck = Deck(ca)
 deck.add(<nom>.render, param1="test", param2="test", page_num=1)
 deck.save_pptx("/tmp/test.pptx")

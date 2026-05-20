@@ -2,18 +2,16 @@
 chartes/<name>/.
 
 A charte is a directory with:
-    tokens.json   # source of truth (colors, fonts, scale)
-    tokens.py     # python-pptx RGBColor constants
-    tokens.css    # CSS variables (for any HTML rendering)
+    tokens.json   # SEULE source de vérité (colors, fonts, type-scale, defaults)
     assets/       # logos, fonts, photos
 
 Usage:
     from lib.charte import Charte
-    ca = Charte.load("credit-agricole")
-    ca.color("primary")            # RGBColor — sarcelle CA
-    ca.font_primary                 # "Raleway"
-    ca.asset("logo/ca-logo.jpg")    # absolute path
-    ca.token_size("h1")             # 46.0 (pt)
+    ch = Charte.load("blank")
+    ch.color("primary")            # RGBColor — couleur primaire du thème
+    ch.font_primary                # famille de police principale
+    ch.asset("logo/main.png")      # chemin absolu vers un asset du thème
+    ch.token_size("h1")            # 46.0 (pt)
 """
 from __future__ import annotations
 

@@ -2,7 +2,7 @@
 
 Visuel :
     ┌────────────────────────────────────────────────────┐
-    │ ▌ header CA · brand · TAG · NN                     │
+    │ ▌ header  brand · TAG · NN                          │
     │                                                    │
     │ TITRE PROGRAMME                                    │
     │ ──                                                 │
@@ -17,12 +17,12 @@ Visuel :
     │  10:30  ──  Atelier 1 — innovation                 │
     │              ...                                   │
     └────────────────────────────────────────────────────┘
-    Colonne horaire à gauche (sarcelle), liste verticale d'activités.
+    Colonne horaire à gauche (couleur `primary`), liste verticale d'activités.
 
 Usage :
     agenda_list.render(slide, charte,
         title="Programme de la journée",
-        subtitle="26 août 2026 — Roland Garros",
+        subtitle="<date> — <lieu>",
         items=[
             {"time": "09:00", "title": "Accueil café",
              "detail": "animation libre, présentation"},
@@ -32,7 +32,7 @@ Usage :
         ],
         page_num=8,
         section_tag=None,
-        ca_logo_path=ca.asset(...))
+        brand_logo_path=ca.asset(...))
 """
 from __future__ import annotations
 
@@ -51,18 +51,18 @@ def render(slide, ca, *,
            subtitle: str | None = None,
            section_tag: str | None = None,
            brand_text: str | None = None,
-           ca_logo_path: str | None = None):
+           brand_logo_path: str | None = None):
     """Render an agenda / timeline slide.
 
-    `ca_logo_path` falls back to ``charte.default("header_logo")`` when None.
+    `brand_logo_path` falls back to ``charte.default("header_logo")`` when None.
     """
-    if ca_logo_path is None:
-        ca_logo_path = ca.default("header_logo")
+    if brand_logo_path is None:
+        brand_logo_path = ca.default("header_logo")
 
     add_rect(slide, 0, 0, SLIDE_W_CM, SLIDE_H_CM, fill=ca.color("bg"))
     header_kwargs = {} if brand_text is None else {"brand_text": brand_text}
     draw_header(slide, ca, page_num=page_num, section_tag=section_tag,
-                logo_path=ca_logo_path, **header_kwargs)
+                logo_path=brand_logo_path, **header_kwargs)
 
     # Title block
     _, tf = add_text(slide, 0.9, 1.7, SLIDE_W_CM - 1.8, 1.5, margins=(0, 0, 0, 0))
@@ -81,7 +81,7 @@ def render(slide, ca, *,
     else:
         list_y = 4.2
 
-    # Vertical rail (left, sarcelle thin line)
+    # Vertical rail (left, `primary` thin line)
     rail_x = 4.5
     rail_top = list_y
     rail_bottom = SLIDE_H_CM - 1.5

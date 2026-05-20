@@ -9,9 +9,9 @@ from lib.charte import Charte
 from lib.deck import Deck
 from layouts import cover_split, section_divider, event_fiche
 
-deck = Deck(Charte.load("credit-agricole"))
+deck = Deck(Charte.load("blank"))
 deck.add(cover_split.render, brand_label="...", title_lines=[...], ...)
-deck.add(section_divider.render, tag="FRANCE", title="...", subtitle="...")
+deck.add(section_divider.render, tag="<TAG>", title="...", subtitle="...")
 deck.add(event_fiche.render, name="...", title="...", ...)
 deck.save_pptx("out/deck.pptx")
 deck.export_pdf("out/deck.pptx", "out/deck.pdf")
@@ -32,12 +32,12 @@ deck.export_pdf("out/deck.pptx", "out/deck.pdf")
 **Signature** :
 ```python
 cover_split.render(slide, charte, *,
-    brand_label: str,                   # ex: "CRÉDIT AGRICOLE"
-    eyebrow: str,                       # ex: "BENCHMARK · 2026 — 2027"
+    brand_label: str,                   # nom de marque en haut (ex: "ACME CORP")
+    eyebrow: str,                       # surtitre (ex: "BENCHMARK · 2026 — 2027")
     photo_path: str | None,             # photo carrée gauche (peut être None)
     photo_caption: str | None,          # citation italique sous la photo
     title_lines: list[str],             # titre principal (1-3 lignes)
-    subtitle_lines: list[str],          # sous-titre vert pomme (1-2 lignes)
+    subtitle_lines: list[str],          # sous-titre `signature` (1-2 lignes)
     accroche: list[str],                # 1-2 lignes d'accroche
     logo_path: str | None,              # logo client bas-droit
     signoff: str)                       # mention bas-droite
@@ -49,13 +49,13 @@ cover_split.render(slide, charte, *,
 
 ![section_divider](./previews/section_divider.png)
 
-**Usage** : introduire une partie. Fond sarcelle foncé, eyebrow + titre + sous-titre, n° de page.
+**Usage** : introduire une partie. Fond `primary-deep`, eyebrow + titre + sous-titre, n° de page.
 
 **Signature** :
 ```python
 section_divider.render(slide, charte, *,
-    tag: str,                           # ex: "FRANCE"
-    title: str,                         # ex: "LES ÉVÉNEMENTS MAJEURS EN FRANCE"
+    tag: str,                           # ex: "PARTIE 1"
+    title: str,                         # titre de section en grand
     subtitle: str,
     page_num: int)                      # auto-injecté par Deck.add
 ```
@@ -71,7 +71,7 @@ section_divider.render(slide, charte, *,
 **Signature** :
 ```python
 event_fiche.render(slide, charte, *,
-    name: str,                          # surtitre "CHANGENOW"
+    name: str,                          # surtitre (ex: nom de l'événement)
     title: str,                         # accroche grande typo
     date: str, lieu: str,
     audience: str, taille: str, format: str, infos: str,
@@ -80,11 +80,11 @@ event_fiche.render(slide, charte, *,
     activations: list[tuple[str, str|None]],  # [(titre, sub), …]
     site: str,
     page_num: int,                      # auto-injecté
-    section_tag: str | None = None,     # "FRANCE" | "EUROPE" | "INFLUENCE"
+    section_tag: str | None = None,     # tag de section optionnel en header
     speakers: str | None = None,
     highlight: str | None = None,       # bandeau étoilé bas
     logo_path: str | None = None,       # logo event top-right
-    ca_logo_path: str | None = None)    # logo CA dans le header
+    brand_logo_path: str | None = None) # logo de marque dans le header
 ```
 
 ---
@@ -98,7 +98,7 @@ event_fiche.render(slide, charte, *,
    - `ca.color("...")`, `ca.font_primary`, `ca.token_size("...")` pour la charte
    - Jamais de couleur/font hardcodée
 4. Si le masque a besoin du header standard, importer `layouts._header.draw`.
-5. Ajouter un preview PNG dans `previews/<slug>.png` (export depuis le deck CA si pertinent).
+5. Ajouter un preview PNG dans `previews/<slug>.png` (export depuis un deck de référence).
 6. Documenter ici (titre + image + signature + usage).
 
 ## Conventions

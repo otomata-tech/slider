@@ -11,20 +11,20 @@ Visuel :
     │ ▌                   │  ────────────                │
     │                     │  [logo client]   signoff     │
     └─────────────────────┴──────────────────────────────┘
-    fond sarcelle foncé        fond crème
+    fond `primary-deep`        fond `panel-cream`
 
 Usage typique :
     cover_split.render(slide, charte,
-        brand_label="CRÉDIT AGRICOLE",
+        brand_label="ACME CORP",
         eyebrow="BENCHMARK · 2026 — 2027",
-        photo_path=ca.asset("photo/ca-siege.jpg"),
-        photo_caption="« Agir chaque jour... »",
-        title_lines=["Événements", "stratégiques."],
-        subtitle_lines=["Capter l'attention", "des décideurs."],
-        accroche=["26 rendez-vous incontournables —",
-                  "France · Europe · Cercles d'influence."],
-        logo_path=ca.asset("logo/ca-logo-baseline.png"),
-        signoff="Présenté par La Fabrique by CA · 2026")
+        photo_path=ch.asset("photo/cover.jpg"),
+        photo_caption="« Citation d'accroche... »",
+        title_lines=["Titre principal", "sur deux lignes."],
+        subtitle_lines=["Sous-titre signature", "accroche secondaire."],
+        accroche=["Ligne d'accroche descriptive —",
+                  "deux à trois éléments-clés."],
+        logo_path=ch.asset("logo/main.png"),
+        signoff="Présenté par <équipe> · 2026")
 """
 from __future__ import annotations
 

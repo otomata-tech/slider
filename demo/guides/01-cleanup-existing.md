@@ -60,7 +60,7 @@ slide-craft new <nom> --charte=<charte>
 
 Convertir `slides.txt` en structure Python. Pour les benchmarks events, le pattern est `LIST_OF_DICTS = [...]` avec une dict par fiche. Toujours inclure une clé `slug` qui pointe vers l'asset image (logo de la fiche).
 
-**Les assets de marque sont auto-injectés depuis la charte.** Tu ne passes `photo_path` / `logo_path` / `ca_logo_path` que si tu veux **override** le défaut. Les layouts (`cover_split`, `event_fiche`, etc.) lisent :
+**Les assets de marque sont auto-injectés depuis la charte.** Tu ne passes `photo_path` / `logo_path` / `brand_logo_path` que si tu veux **override** le défaut. Les layouts (`cover_split`, `event_fiche`, etc.) lisent :
 - `ca.default("cover_photo")` — photo hero de la couverture
 - `ca.default("cover_logo")` — logo avec baseline en bas de cover
 - `ca.default("header_logo")` — logo dans le bandeau supérieur des slides de contenu
@@ -73,7 +73,7 @@ Garder court (~50-80 lignes). Boucler sur les données et appeler le layout adé
 
 Pour un benchmark events typique :
 ```python
-ca = Charte.load("credit-agricole")
+ca = Charte.load("<charte>")
 deck = Deck(charte=ca)
 deck.add(cover_split.render, **COVER)             # photo + logo charte auto
 for section_key, fiches in SECTIONS:
@@ -83,7 +83,7 @@ for section_key, fiches in SECTIONS:
         deck.add(event_fiche.render,
                  section_tag=DIVIDERS[section_key]["tag"],
                  logo_path=str(LOGOS / f"{fiche['slug']}.png"),  # logo event
-                 **kwargs)                                       # ca_logo_path auto
+                 **kwargs)                                       # brand_logo_path auto
 ```
 
 ### 9. Builder

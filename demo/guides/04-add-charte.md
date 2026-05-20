@@ -17,35 +17,12 @@ mkdir -p chartes/<nom>/assets/{logo,photo,fonts}
 
 ### 3. Écrire `tokens.json`
 
-Source de vérité. Cf. `chartes/credit-agricole/tokens.json` pour le format complet.
+**Seule source de vérité** du thème. Le moteur ne lit que ce fichier — pas de duplicate `.py` / `.css` à maintenir en parallèle. Cf. `chartes/blank/tokens.json` pour le format complet.
 
 Clés **obligatoires** pour que les layouts existants marchent :
 `primary`, `primary-deep`, `signature`, `text`, `text-strong`, `muted`, `bg`, `rule`, `panel-mint`, `panel-cream`.
 
-### 4. Dériver `tokens.py` et `tokens.css`
-
-Conversions mécaniques :
-
-```python
-# tokens.py
-from pptx.dml.color import RGBColor
-PRIMARY = RGBColor(0x00, 0x89, 0x91)
-# ...
-FONT_PRIMARY = "Raleway"
-```
-
-```css
-/* tokens.css */
-:root {
-  --primary:   #008991;
-  --signature: #82B600;
-  --font-primary: "Raleway", sans-serif;
-}
-```
-
-(Pas obligatoire — la lib lit `tokens.json` directement. Mais utile pour les humains et l'HTML.)
-
-### 5. Placer les assets
+### 4. Placer les assets
 
 ```
 chartes/<nom>/assets/
@@ -58,7 +35,7 @@ chartes/<nom>/assets/
     └── *.ttf
 ```
 
-### 6. Installer les polices en système
+### 5. Installer les polices en système
 
 Pour que LibreOffice rende le PPTX avec la bonne police, les TTFs doivent être installés au niveau OS.
 
@@ -80,14 +57,14 @@ cp chartes/<nom>/assets/fonts/*.ttf ~/Library/Fonts/
 **Windows**
 Double-clic sur chaque `.ttf` → bouton "Installer" (ou installation pour tous les utilisateurs si admin).
 
-### 7. Documenter
+### 6. Documenter
 
 Créer `chartes/<nom>/README.md` :
 - Sources (lien CSS scrapé, PDF brand book, …)
 - Palette avec aperçus hex
 - Notes spécifiques (variantes, contextes d'usage)
 
-### 8. Valider
+### 7. Valider
 
 ```bash
 slide-craft new test-<nom> --charte=<nom>
@@ -99,6 +76,6 @@ Ouvrir le PDF. Si les couleurs ou la police diffèrent du brand book, corriger `
 
 ## Conventions
 
-- **Une charte = une marque**, pas une variante. Pour des variantes (par ex. La Fabrique by CA dérivant de CA), créer une charte enfant (`chartes/la-fabrique-by-ca/`) qui override certains tokens et hérite des assets.
+- **Une charte = une marque**, pas une variante. Pour des variantes (sous-marque dérivant d'une charte mère), créer une charte enfant (`chartes/<variante>/`) qui réécrit certains tokens. **À noter** : il n'y a pas aujourd'hui de mécanisme d'héritage entre chartes — chaque `tokens.json` est autonome et complet.
 - **Les chartes sont versionnées dans le repo** (`tokens.*` + petits assets). Les gros assets (photos HD, vidéos) peuvent rester hors repo si > 5 MB.
 - **Ne jamais hardcoder une couleur dans un layout**. Si un layout a besoin d'une couleur que la charte n'expose pas, soit on ajoute le token, soit on dérive d'un existant.

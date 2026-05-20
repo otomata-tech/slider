@@ -2,7 +2,7 @@
 
 Visuel :
     ┌────────────────────────────────────────────────────┐
-    │ ▌ header CA · INNOVATION · brand · TAG · NN        │
+    │ ▌ header  brand · TAG · NN                          │
     │                                                    │
     │ TITRE GRILLE                                       │
     │ ──                                                 │
@@ -28,7 +28,7 @@ Usage :
         ],
         page_num=6,
         section_tag=None,
-        ca_logo_path=ca.asset(...),
+        brand_logo_path=ca.asset(...),
         subtitle=None)
 """
 from __future__ import annotations
@@ -47,17 +47,17 @@ def render(slide, ca, *,
            page_num: int,
            subtitle: str | None = None,
            section_tag: str | None = None,
-           ca_logo_path: str | None = None):
+           brand_logo_path: str | None = None):
     """Render a grid of portraits. Each person is {photo, name, role}.
 
-    `ca_logo_path` falls back to ``charte.default("header_logo")`` when None.
+    `brand_logo_path` falls back to ``charte.default("header_logo")`` when None.
     """
-    if ca_logo_path is None:
-        ca_logo_path = ca.default("header_logo")
+    if brand_logo_path is None:
+        brand_logo_path = ca.default("header_logo")
 
     add_rect(slide, 0, 0, SLIDE_W_CM, SLIDE_H_CM, fill=ca.color("bg"))
     draw_header(slide, ca, page_num=page_num, section_tag=section_tag,
-                logo_path=ca_logo_path)
+                logo_path=brand_logo_path)
 
     # Title block
     _, tf = add_text(slide, 0.9, 1.7, SLIDE_W_CM - 1.8, 1.5, margins=(0, 0, 0, 0))

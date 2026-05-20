@@ -27,12 +27,12 @@ Aucun service externe, aucun bundler.
 | Masque             | Identité                                                |
 |--------------------|---------------------------------------------------------|
 | `cover_split`      | couverture image+brand à gauche, titre à droite         |
-| `section_divider`  | pleine page sarcelle deep, transition narrative         |
+| `section_divider`  | pleine page `primary-deep`, transition narrative        |
 | `event_fiche`      | fiche événement 2 cols : faits ‖ encart recos           |
 | `image_full`       | photo plein cadre + titre overlay bas                   |
 | `quote`            | citation centrée italique, fond crème + accent          |
 | `portrait_grid`    | grille 2-5 col, photo + nom + rôle                      |
-| `big_number`       | KPI géant (~180pt) sarcelle deep sur crème              |
+| `big_number`       | KPI géant (~180pt) `primary-deep` sur `panel-cream`     |
 | `agenda_list`      | rail vertical horaire / activité / détail               |
 | `text_image`       | 50/50 photo + bullets (côté configurable)               |
 

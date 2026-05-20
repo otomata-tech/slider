@@ -2,7 +2,7 @@
 
 Visuel :
     ┌────────────────────────────────────────────────────┐
-    │ ▌ header CA · brand · TAG · NN                     │
+    │ ▌ header  brand · TAG · NN                          │
     │                                                    │
     │ ┌──────────────┐  EYEBROW                          │
     │ │              │  TITRE GRAS                       │
@@ -27,7 +27,7 @@ Usage :
         bullets=["...", "..."],             # optionnel
         page_num=9,
         section_tag=None,
-        ca_logo_path=ca.asset(...),
+        brand_logo_path=ca.asset(...),
         photo_side="left")                  # "left" (default) ou "right"
 """
 from __future__ import annotations
@@ -49,17 +49,17 @@ def render(slide, ca, *,
            bullets: list[str] | None = None,
            photo_side: str = "left",
            section_tag: str | None = None,
-           ca_logo_path: str | None = None):
+           brand_logo_path: str | None = None):
     """Render a 50/50 photo + text slide.
 
-    `ca_logo_path` falls back to ``charte.default("header_logo")`` when None.
+    `brand_logo_path` falls back to ``charte.default("header_logo")`` when None.
     """
-    if ca_logo_path is None:
-        ca_logo_path = ca.default("header_logo")
+    if brand_logo_path is None:
+        brand_logo_path = ca.default("header_logo")
 
     add_rect(slide, 0, 0, SLIDE_W_CM, SLIDE_H_CM, fill=ca.color("bg"))
     draw_header(slide, ca, page_num=page_num, section_tag=section_tag,
-                logo_path=ca_logo_path)
+                logo_path=brand_logo_path)
 
     # Layout columns : photo half + text half on a 33.867cm slide.
     # Margins 0.9 each side, gutter 0.8 → photo 14, text ~17.
@@ -82,7 +82,7 @@ def render(slide, ca, *,
         # text fills from left margin to start of photo
         text_w = photo_x - text_x - 0.8
 
-    # Photo (with sarcelle frame if missing)
+    # Photo (with `primary-deep` placeholder if missing)
     if photo_path:
         # Background panel behind the image (in case aspect doesn't fill)
         add_rect(slide, photo_x, photo_y, photo_w, photo_h,
@@ -91,7 +91,7 @@ def render(slide, ca, *,
                         w_cm=photo_w, h_cm=photo_h)
         fit_image(pic, max_w_cm=photo_w, max_h_cm=photo_h)
     else:
-        # placeholder — sarcelle deep band
+        # placeholder — `primary-deep` band
         add_rect(slide, photo_x, photo_y, photo_w, photo_h,
                  fill=ca.color("primary-deep"))
 
