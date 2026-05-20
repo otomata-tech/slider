@@ -1,7 +1,7 @@
 ---
 name: slide-craft
-description: "Produit des decks PowerPoint propres (PPTX + PDF) à partir d'une charte client, en composant des masques (layouts) réutilisables. Utiliser quand l'utilisateur dit 'mets au propre ce pptx', 'crée un benchmark', 'fais un deck X dans la charte Y'."
-argument-hint: "[cleanup <source.pptx> | new <nom> --charte=<charte> | build <deck-dir> | list-layouts | list-chartes]"
+description: "Produit des decks PowerPoint propres (PPTX + PDF) à partir d'une charte client, en composant des masques (layouts) réutilisables. Accepte aussi un PDF en source (extraction texte + images + layout). Utiliser quand l'utilisateur dit 'mets au propre ce pptx ou ce pdf', 'crée un benchmark', 'fais un deck X dans la charte Y'."
+argument-hint: "[cleanup <source.pptx|pdf> | new <nom> --charte=<charte> | build <deck-dir> | list-layouts | list-chartes]"
 ---
 
 # slide-craft
@@ -22,6 +22,7 @@ L'utilisateur veut :
 - **Créer un deck à partir de zéro** → workflow [`guides/02-compose-new.md`](guides/02-compose-new.md)
 - **Ajouter un nouveau type de slide** → workflow [`guides/03-add-layout.md`](guides/03-add-layout.md)
 - **Ajouter une charte client** → workflow [`guides/04-add-charte.md`](guides/04-add-charte.md)
+- **Re-créer un deck à partir d'un PDF source** → workflow [`guides/05-from-pdf.md`](guides/05-from-pdf.md)
 
 ## Conventions à respecter
 
@@ -38,6 +39,7 @@ Tous les scripts sont sous `scripts/`. Appel direct :
 slide-craft list-layouts                          # catalogue des masques
 slide-craft list-chartes                          # marques dispo
 slide-craft extract-pptx <source.pptx> <dest>     # texte + assets d'un pptx
+slide-craft extract-pdf <source.pdf> <dest>       # texte + images + bboxes d'un pdf
 slide-craft new <nom> --charte=<name>             # scaffold d'un nouveau deck
 slide-craft build <deck-dir>                      # build.py + export PDF
 ```
