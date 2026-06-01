@@ -24,3 +24,7 @@ decks/*/source/*.docx.bak
 
 # OS
 .DS_Store
+
+# User decks live in the user workspace, not the engine repo
+decks/*
+!decks/.gitkeep
