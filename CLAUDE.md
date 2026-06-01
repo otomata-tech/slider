@@ -20,27 +20,65 @@ Voir [`README.md`](./README.md) pour la vue d'ensemble.
 
 Aucun service externe, aucun bundler.
 
+## Chrome & composants PCDI
+
+Charte `credit-agricole` = **système de design PCDI Capital Innovation** (kit juin 2026). Deux briques partagées :
+
+- **`layouts/_header.py`** — chrome de page : `draw()` (wordmark+n°, mention « Usage Interne », filet noir, pied date+logo) et `title_block()` (eyebrow + titre CAPITALES + sous-titre vert). Tout masque de contenu appelle ces deux fonctions.
+- **`layouts/_components.py`** — composants réutilisables du kit : `marker_list()` (listes « + » vertes / « – » rouges, terme-clé en gras), `stat_card()` (carte mint, chiffre vert), `pill()` (pastille mint / vert plein / contour).
+
+Primitives ajoutées à `lib/pptx_helpers.py` : `add_round_rect`, `add_oval`, `set_hanging` (indent pendante), et `set_fill` désactive l'ombre (rendu plat).
+
 ## Bibliothèque de masques (`layouts/`)
 
-9 masques cohérents charte mais distincts visuellement :
+Masques cohérents charte mais distincts. **Gabarits natifs PCDI** (kit) :
+
+| Masque               | Identité                                                |
+|----------------------|---------------------------------------------------------|
+| `exec_summary`       | thèse + amorce + 2 axes en listes « + » (kit slide 16)  |
+| `thesis_two_col`     | thèse 2 colonnes + rangée de stat-cards (kit slide 17)  |
+| `company_zoom`       | logo + pastille reco + valo + description (kit slide 18)|
+| `comparison_table`   | tableau : en-tête mint, indicateurs circulaires (s.12)  |
+
+Masques génériques (reskinés PCDI automatiquement via `ca.color`) :
 
 | Masque             | Identité                                                |
 |--------------------|---------------------------------------------------------|
 | `cover_split`      | couverture image+brand à gauche, titre à droite         |
 | `section_divider`  | pleine page `primary-deep`, transition narrative        |
+| `text_image`       | 50/50 photo + listes « + » (côté configurable)          |
 | `event_fiche`      | fiche événement 2 cols : faits ‖ encart recos           |
 | `image_full`       | photo plein cadre + titre overlay bas                   |
-| `quote`            | citation centrée italique, fond crème + accent          |
+| `quote`            | citation centrée italique + accent                      |
 | `portrait_grid`    | grille 2-5 col, photo + nom + rôle                      |
-| `big_number`       | KPI géant (~180pt) `primary-deep` sur `panel-cream`     |
+| `big_number`       | KPI géant pleine page                                   |
 | `agenda_list`      | rail vertical horaire / activité / détail               |
-| `text_image`       | 50/50 photo + bullets (côté configurable)               |
+| `kpi_grid` `logo_wall` `services_grid` `case_study` `comparison_columns` | masques pitch/B2B (v1.2.0) |
+
+## Invocation du CLI (plugin installé vs dev)
+
+Le CLI `slide-craft` **n'est jamais sur le `PATH`** côté skill, et `activate.sh` ne survit pas entre deux appels Bash (shells sans état). Les SKILL.md et guides appellent donc le binaire **par chemin absolu**, redéfini à chaque appel :
+
+```bash
+SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"
+"$SC" list-layouts
+```
+
+- Plugin installé → `$CLAUDE_PLUGIN_ROOT` posé par Claude Code.
+- Dev in-repo (`cd slider && claude`) → fallback `.` (cwd = racine du repo).
+
+Le binaire s'auto-localise (`_common.py` dérive `PROJECT` via realpath) : aucune var d'env requise, `SLIDER_ROOT`/`activate.sh` ne sont qu'un confort pour un humain en terminal interactif. **Ne jamais écrire `slide-craft <cmd>` en cru dans un SKILL/guide** — ça suppose le PATH, qui n'existe pas quand le plugin tourne installé.
+
+### Chartes clientes : où les cloner
+
+Le plugin installé ne livre que `blank`. Une charte cliente se clone dans **`<workspace>/chartes/<nom>/`** (l'espace de travail de l'utilisateur, cf. ordre de recherche ci-dessous) — **jamais** dans le cache plugin (`$CLAUDE_PLUGIN_ROOT/chartes/`), qui est effacé à chaque `claude plugin update`.
 
 ## Découverte des chartes
 
 `Charte.load(name)` cherche dans cet ordre :
-1. `$PWD/chartes/` — overrides locaux quand on lance la CLI hors du repo slider
-2. `<engine>/chartes/` — chartes du repo (où les thèmes clients sont clonés)
+1. `$PWD/chartes/` — override par deck (workspace courant)
+2. `~/.local/share/slider/chartes/` (ou `$XDG_DATA_HOME/slider/chartes/`) — thèmes persistants par utilisateur, indépendants du cwd et **non effacés par `plugin update`**. **C'est ici qu'on clone les thèmes clients.**
+3. `<engine>/chartes/` — built-in `blank` + thèmes clonés dans un repo de dev
 
 `slide-craft list-chartes` itère ces chemins et dédupliqe par nom (premier-vu gagne).
 

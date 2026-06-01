@@ -1,4 +1,4 @@
-# activate.sh — Source this to add slide-craft CLI to your shell PATH.
+# activate.sh — Confort HUMAIN : ajoute le CLI slide-craft au PATH du shell.
 #
 # Usage:
 #     source <slider>/demo/activate.sh
@@ -7,6 +7,11 @@
 #     deactivate-slide-craft
 #
 # Session-scoped: only affects the current shell.
+#
+# NOTE : ne PAS s'appuyer là-dessus quand Claude pilote le skill — chaque appel
+# de l'outil Bash est un shell neuf, donc le PATH posé ici n'y survit pas. Côté
+# skill, le CLI est appelé par chemin absolu : "$CLAUDE_PLUGIN_ROOT/demo/bin/slide-craft"
+# (le binaire s'auto-localise via realpath, aucune var d'env requise).
 
 _SLIDER_DEMO="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 _SLIDER_ROOT="$(dirname "$_SLIDER_DEMO")"

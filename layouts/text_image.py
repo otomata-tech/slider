@@ -35,7 +35,7 @@ from __future__ import annotations
 from lib.pptx_helpers import (
     SLIDE_W_CM, SLIDE_H_CM,
     add_rect, add_text, add_image, fit_image,
-    para, run,
+    para, run, set_hanging,
 )
 from layouts._header import draw as draw_header
 
@@ -64,8 +64,8 @@ def render(slide, ca, *,
     # Layout columns : photo half + text half on a 33.867cm slide.
     # Margins 0.9 each side, gutter 0.8 → photo 14, text ~17.
     photo_w = 14.0
-    photo_h = SLIDE_H_CM - 2.5  # leave header + small bottom margin
     photo_y = 1.7
+    photo_h = SLIDE_H_CM - photo_y - 1.7  # clearance pour le pied de page
 
     if photo_side == "left":
         photo_x = 0.9
@@ -107,30 +107,25 @@ def render(slide, ca, *,
     if eyebrow:
         p = para(tf, first=first, space_after=4)
         first = False
-        run(p, eyebrow.upper(), size=10, bold=True,
-            color=ca.color("signature"), font=ca.font_primary)
+        r = run(p, eyebrow.upper(), size=8, bold=True,
+                color=ca.color("muted-soft"), font=ca.font_primary)
+        r._r.get_or_add_rPr().set("spc", "60")
 
-    p = para(tf, first=first, line_spacing=1.05, space_after=8)
+    p = para(tf, first=first, line_spacing=1.05, space_after=10)
     first = False
-    run(p, title, size=22, bold=True,
-        color=ca.color("text-strong"), font=ca.font_primary)
-
-    # Underline accent — drawn as a separate shape (rect outside the textframe)
-    # is hard to anchor here without computing the rendered title height.
-    # We use a typographic underline-like thin paragraph instead.
-    p = para(tf, space_before=0, space_after=10, line_spacing=0.3)
-    run(p, "▬▬", size=10, bold=True,
-        color=ca.color("signature"), font=ca.font_primary)
+    run(p, title.upper(), size=22, bold=True,
+        color=ca.color("text"), font=ca.font_primary)
 
     if intro:
-        p = para(tf, line_spacing=1.4, space_after=10)
-        run(p, intro, size=12,
-            color=ca.color("text"), font=ca.font_primary)
+        p = para(tf, line_spacing=1.5, space_after=12)
+        run(p, intro, size=11,
+            color=ca.color("text-soft"), font=ca.font_primary)
 
     if bullets:
         for item in bullets:
-            p = para(tf, space_before=4, space_after=2, line_spacing=1.3)
-            run(p, "▸  ", size=12, bold=True,
-                color=ca.color("signature"), font=ca.font_primary)
+            p = para(tf, space_before=4, space_after=6, line_spacing=1.3)
+            set_hanging(p, 0.7)
+            run(p, "+  ", size=11, bold=True,
+                color=ca.color("primary"), font=ca.font_primary)
             run(p, item, size=11,
                 color=ca.color("text"), font=ca.font_primary)

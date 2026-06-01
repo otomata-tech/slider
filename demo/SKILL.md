@@ -8,6 +8,20 @@ argument-hint: "[cleanup <source.pptx|pdf> | new <nom> --charte=<charte> | build
 
 Atelier pour fabriquer des decks 16:9 (PPTX éditable + PDF de livraison) qui respectent strictement une charte de marque. PowerPoint est le format canonique : python-pptx construit, LibreOffice exporte en PDF — ce qui garantit que le PDF montre exactement ce que verra l'ouverture dans PowerPoint.
 
+## Invocation du CLI (à lire en premier)
+
+Le CLI `slide-craft` **n'est pas sur le `PATH`** quand le plugin tourne installé, et `source activate.sh` **ne survit pas** d'un appel Bash à l'autre (chaque appel est un shell neuf, sans état). Donc : **appelle toujours le binaire par chemin absolu**, et redéfinis-le dans **chaque** appel Bash :
+
+```bash
+SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"
+"$SC" list-layouts
+```
+
+- **Plugin installé** : `$CLAUDE_PLUGIN_ROOT` est posé par Claude Code → pointe vers le moteur.
+- **Dev in-repo** (`cd slider && claude`) : `$CLAUDE_PLUGIN_ROOT` non défini → fallback `.` = racine du repo (cwd).
+
+Le binaire s'auto-localise (realpath) : pas besoin de `SLIDER_ROOT` ni d'`activate.sh`. `activate.sh` ne sert qu'à un humain en shell interactif. Dans les guides ci-dessous, `slide-craft <cmd>` est un raccourci de lecture pour `"$SC" <cmd>`.
+
 ## Composants
 
 - **Chartes** (`chartes/<nom>/`) : tokens (couleurs, fonts, scale) + assets (logos, photos, fonts). Source de vérité pour le look. Tokens en JSON + Python + CSS.
@@ -33,15 +47,15 @@ L'utilisateur veut :
 
 ## Outils en ligne de commande
 
-Tous les scripts sont sous `scripts/`. Appel direct :
+Tous les scripts sont sous `scripts/`. Appel par chemin absolu (cf. « Invocation du CLI ») — `SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"` :
 
 ```bash
-slide-craft list-layouts                          # catalogue des masques
-slide-craft list-chartes                          # marques dispo
-slide-craft extract-pptx <source.pptx> <dest>     # texte + assets d'un pptx
-slide-craft extract-pdf <source.pdf> <dest>       # texte + images + bboxes d'un pdf
-slide-craft new <nom> --charte=<name>             # scaffold d'un nouveau deck
-slide-craft build <deck-dir>                      # build.py + export PDF
+"$SC" list-layouts                          # catalogue des masques
+"$SC" list-chartes                          # marques dispo
+"$SC" extract-pptx <source.pptx> <dest>     # texte + assets d'un pptx
+"$SC" extract-pdf <source.pdf> <dest>       # texte + images + bboxes d'un pdf
+"$SC" new <nom> --charte=<name>             # scaffold d'un nouveau deck
+"$SC" build <deck-dir>                      # build.py + export PDF
 ```
 
 ## Workflow standard

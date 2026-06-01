@@ -50,9 +50,15 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 # Locate the slider engine. Order:
-#   1. $SLIDER_ROOT environment variable (preferred — set by demo/activate.sh)
-#   2. hardcoded path written at scaffold time
-SLIDER = Path(os.environ.get("SLIDER_ROOT") or "{slider_root}")
+#   1. $CLAUDE_PLUGIN_ROOT — set by Claude Code; survives `plugin update`
+#      (the baked path below points into a versioned cache that gets wiped).
+#   2. $SLIDER_ROOT — manual override (e.g. dev shell via demo/activate.sh).
+#   3. hardcoded path written at scaffold time (dev / last resort).
+SLIDER = Path(
+    os.environ.get("CLAUDE_PLUGIN_ROOT")
+    or os.environ.get("SLIDER_ROOT")
+    or "{slider_root}"
+)
 sys.path.insert(0, str(SLIDER))
 sys.path.insert(0, str(HERE))
 
@@ -90,8 +96,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("name")
     ap.add_argument("--charte", default="blank",
-                    help="charte name (must be findable via SLIDER_THEMES_PATH "
-                         "or in slider/chartes/; run `slide-craft list-chartes`)")
+                    help="charte name (findable in ./chartes/, "
+                         "~/.local/share/slider/chartes/, or the engine's "
+                         "chartes/; run `slide-craft list-chartes`)")
     ap.add_argument("--path", default=None, type=Path,
                     help="parent dir (default: $PWD/decks/)")
     args = ap.parse_args()

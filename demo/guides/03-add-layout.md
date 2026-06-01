@@ -1,5 +1,7 @@
 # Ajouter un nouveau masque (layout)
 
+> **CLI** : `slide-craft <cmd>` ci-dessous = `"$SC" <cmd>` avec `SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"` (à redéfinir dans chaque appel Bash — cf. SKILL.md « Invocation du CLI »). Le binaire s'auto-localise, pas d'`activate.sh`.
+
 Quand aucun layout existant ne couvre un type de slide qu'on veut produire (timeline, comparaison 3-cols, citation centrée, KPI grand format, etc.), on crée un nouveau masque.
 
 ## Étapes

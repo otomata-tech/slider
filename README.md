@@ -29,7 +29,7 @@ Les skills sont auto-détectés via `.claude/skills/`. Pour récupérer les upda
 
 ### Ensuite, dans Claude
 
-Dis *« installe slide-craft »*. Le skill `install` prend la main : il vérifie Python + `python-pptx` + `Pillow`, te propose d'installer LibreOffice (optionnel — pour l'export PDF), te demande si tu veux cloner un thème client (URL du repo) et active la CLI dans ton shell. Procédure manuelle de fallback dans [`INSTALL.md`](./INSTALL.md).
+Dis *« installe slide-craft »*. Le skill `install` prend la main : il vérifie Python + `python-pptx` + `Pillow` + `PyMuPDF`, te propose d'installer LibreOffice (optionnel — pour l'export PDF ; désactivé proprement en sandbox type Cowork → PPTX seul), te demande si tu veux cloner un thème client (URL du repo, cloné dans ton espace de travail `<workspace>/chartes/`) et définit ton dossier de travail. Le CLI s'appelle par chemin absolu (`$CLAUDE_PLUGIN_ROOT/demo/bin/slide-craft`), il n'y a rien à « activer ». Procédure manuelle de fallback dans [`INSTALL.md`](./INSTALL.md).
 
 Une fois installé, tu peux dire à Claude :
 - *« crée un deck de pitch en 5 slides, charte `<nom>` »*

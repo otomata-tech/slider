@@ -1,5 +1,7 @@
 # Mettre au propre un PPTX existant
 
+> **CLI** : `slide-craft <cmd>` ci-dessous = `"$SC" <cmd>` avec `SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"` (à redéfinir dans chaque appel Bash — cf. SKILL.md « Invocation du CLI »). Le binaire s'auto-localise, pas d'`activate.sh`.
+
 L'utilisateur a une source PPTX (souvent générée par Gamma, exportée de Google Slides, ou bricolée) et veut qu'on **rebatisse un deck propre dans une charte client**, en conservant le contenu.
 
 ## Étapes
@@ -7,7 +9,7 @@ L'utilisateur a une source PPTX (souvent générée par Gamma, exportée de Goog
 ### 1. Localiser la source et identifier la charte
 
 ```bash
-slide-craft list-chartes
+"$SC" list-chartes
 ```
 
 Si la charte cible n'existe pas, suivre [`04-add-charte.md`](04-add-charte.md) avant.
@@ -15,7 +17,7 @@ Si la charte cible n'existe pas, suivre [`04-add-charte.md`](04-add-charte.md) a
 ### 2. Extraire texte + assets
 
 ```bash
-slide-craft extract-pptx ~/Téléchargements/source.pptx /tmp/extracted/
+"$SC" extract-pptx ~/Téléchargements/source.pptx /tmp/extracted/
 ```
 
 Produit :
@@ -34,7 +36,7 @@ Lire `slides.txt`. Identifier :
 ### 4. Mapper aux layouts disponibles
 
 ```bash
-slide-craft list-layouts
+"$SC" list-layouts
 ```
 
 Choisir un masque par type. Si aucun ne convient (ex: timeline horizontale, comparaison 3 cols), créer le masque manquant avant — voir [`03-add-layout.md`](03-add-layout.md).
@@ -53,7 +55,7 @@ L'image-clé est généralement la **plus grosse** image unique à chaque slide 
 ### 6. Scaffolder le deck
 
 ```bash
-slide-craft new <nom> --charte=<charte>
+"$SC" new <nom> --charte=<charte>
 ```
 
 ### 7. Modéliser le contenu dans `data.py`
@@ -89,7 +91,7 @@ for section_key, fiches in SECTIONS:
 ### 9. Builder
 
 ```bash
-slide-craft build decks/<nom>
+"$SC" build decks/<nom>
 ```
 
 → `out/deck.pptx` + `out/deck.pdf`.
