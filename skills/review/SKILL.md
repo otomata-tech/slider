@@ -1,10 +1,10 @@
 ---
-name: deck-review
+name: review
 description: "Audite un deck PowerPoint (.pptx) ou PDF contre une charte : couleurs hors-palette, polices hors-charte, titres non capitalisés, puces non conformes, contraste. Produit un rapport priorisé et propose des correctifs. Utiliser quand l'utilisateur dit 'relis ce deck', 'est-ce à la charte ?', 'audite ces slides', 'vérifie la conformité', 'lint ce pptx'."
 argument-hint: "<deck.pptx|pdf> [--charte=<name>]"
 ---
 
-# deck-review
+# review (deck)
 
 Lint de conformité charte d'un deck existant. Sert le principe **« charte = source de vérité »** : transforme « est-ce bien à la charte ? » en check reproductible, puis propose des correctifs.
 
@@ -13,7 +13,7 @@ Lint de conformité charte d'un deck existant. Sert le principe **« charte = so
 ```bash
 SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"
 ```
-(à redéfinir dans chaque appel Bash — cf. le skill `slide-craft`, section « Invocation du CLI ».)
+(à redéfinir dans chaque appel Bash — cf. le skill `deck`, section « Invocation du CLI ».)
 
 ## Quand appeler ce skill
 
@@ -67,7 +67,7 @@ Puis lire les images et signaler : chrome PCDI absent, titres sans sous-titre ve
 Selon ce que veut l'utilisateur :
 - **Rapport seul** : s'arrêter là.
 - **Re-skin** : si le deck a des sources slide-craft, corriger `data.py`/`build.py` (couleurs via `ca.color`, titres `.upper()`, puces « + » via `marker_list`) et rebuilder.
-- **Reconstruction** : si le deck est un import externe (Gamma…), basculer sur le skill `slide-craft` guide `01-cleanup-existing` pour le refaire propre dans la charte.
+- **Reconstruction** : si le deck est un import externe (Gamma…), basculer sur le skill `deck` guide `01-cleanup-existing` pour le refaire propre dans la charte.
 
 Ne jamais « corriger » en hardcodant un hex : toujours passer par un token de charte (ajouter le token si manquant).
 

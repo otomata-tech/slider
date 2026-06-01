@@ -24,16 +24,18 @@ Aucun service externe, aucun bundler.
 
 Le plugin `slider` expose 4 skills (famille cohérente, un verbe chacun) :
 
-| Skill | Verbe | Rôle |
-|---|---|---|
-| `install` | installer | setup env (deps, LibreOffice, charte au chemin stable) |
-| `slide-craft` | composer | créer / nettoyer un deck, ajouter masque/charte, charts, depuis doc |
-| `deck-review` | auditer | lint de conformité charte d'un `.pptx` (`slide-craft review`) |
-| `charte-extract` | dériver | nouveau thème depuis un PPTX corporate (`slide-craft extract-charte`) |
+| Skill | Rôle |
+|---|---|
+| `install` | setup env (deps, LibreOffice, charte au chemin stable) |
+| `deck` | créer / nettoyer / recréer un deck, ajouter masque, charts, depuis doc/pdf/pptx |
+| `review` | lint de conformité charte d'un `.pptx` (CLI `slide-craft review`) |
+| `theme` | créer / dériver / éditer une charte (CLI `slide-craft extract-charte` ou guide add-charte) |
 
-Règle : **un skill = un workflow** (pilotage), pas une primitive. Les primitives (un masque, un helper, un sous-format) vivent dans `slide-craft`, pas dans un skill séparé — c'est pourquoi `chart_block` (charts) et le guide `from-document` (mémo→deck) sont DANS `slide-craft`, pas des skills.
+> **Skill ≠ CLI.** Le skill principal s'appelle **`deck`** ; le binaire moteur interne (que Claude appelle, jamais l'utilisateur) reste **`slide-craft`** (`demo/bin/slide-craft <cmd>`).
 
-Câblage : `skills/<name>/SKILL.md` (réel) + symlink `.claude/skills/<name>` (dev in-repo). `slide-craft` est le symlink `skills/slide-craft → ../demo`.
+Règle : **un skill = un workflow** (pilotage), pas une primitive. Les primitives (un masque, un helper, un sous-format) vivent dans `deck`, pas dans un skill séparé — c'est pourquoi `chart_block` (charts) et le guide `from-document` (mémo→deck) sont DANS `deck`, pas des skills.
+
+Câblage : `skills/<name>/SKILL.md` (réel) + symlink `.claude/skills/<name>` (dev in-repo). `deck` est le symlink `skills/deck → ../demo`.
 
 ## Chrome & composants PCDI
 
