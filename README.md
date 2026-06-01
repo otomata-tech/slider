@@ -2,7 +2,7 @@
 
 Moteur de production de decks PowerPoint propres (PPTX + PDF) à partir d'une **charte client** et d'une **bibliothèque de masques** (layouts) réutilisables.
 
-Pas un framework — un atelier : tokens de marque + layouts + CLI qui sortent `deck.pptx` (+ `deck.pdf` si LibreOffice présent) à partir d'une structure de données Python.
+Pas un framework — un atelier : tokens de marque + layouts + CLI qui sortent `deck.pptx` (livrable par défaut ; `deck.pdf` seulement avec `--pdf`) à partir d'une structure de données Python.
 
 ## Démarrage (teammate, 2 min)
 
@@ -63,8 +63,9 @@ slide-craft list-layouts              # 9 masques disponibles
 slide-craft layout-info big_number    # kwargs d'un masque
 slide-craft new mon-deck --charte=<nom>
                                       # → ./decks/mon-deck/
-slide-craft build decks/mon-deck      # → out/deck.pptx (+ deck.pdf si soffice)
-slide-craft build decks/mon-deck --no-pdf    # skip PDF même si soffice présent
+slide-craft build decks/mon-deck      # → out/deck.pptx (livrable par défaut)
+slide-craft build decks/mon-deck --pdf       # + out/deck.pdf (à la demande)
+slide-craft preview decks/mon-deck           # PNG + planche-contact (à la demande)
 ```
 
 Pour mettre au propre un PPTX existant : voir [`demo/guides/01-cleanup-existing.md`](./demo/guides/01-cleanup-existing.md).

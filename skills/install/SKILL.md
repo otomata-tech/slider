@@ -132,7 +132,7 @@ Puis les 3 commandes utiles pour démarrer (rappeler qu'il faut redéfinir `SC` 
 SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"
 "$SC" list-layouts                 # voir les masques disponibles
 "$SC" new mon-deck --charte=<nom>  # créer un deck
-"$SC" build decks/mon-deck         # produire le PPTX (+ PDF si LibreOffice)
+"$SC" build decks/mon-deck         # → PPTX (livrable) ; ajoute --pdf pour un PDF
 ```
 
 Et pointer vers le skill `deck` pour la suite (composition, mise au propre d'un PPTX existant, etc.).

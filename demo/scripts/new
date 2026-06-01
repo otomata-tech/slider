@@ -82,6 +82,7 @@ def main():
     pptx = deck.save_pptx(OUT / "deck.pptx")
     print(f"PPTX → {{pptx}}  ({{deck.pages}} slides)")
 
+    # PDF opt-in : ne sort qu'avec `slide-craft build --pdf` (ou via preview).
     pdf = deck.export_pdf(pptx, OUT / "deck.pdf")
     if pdf:
         print(f"PDF  → {{pdf}}")

@@ -21,8 +21,9 @@ from _common import fail
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("deck_dir", type=Path)
-    ap.add_argument("--no-pdf", action="store_true",
-                    help="Skip PDF export even if LibreOffice is available.")
+    ap.add_argument("--pdf", action="store_true",
+                    help="Also export a PDF (PPTX is the default deliverable). "
+                         "Requires LibreOffice.")
     args = ap.parse_args()
 
     deck_dir = args.deck_dir.expanduser().resolve()
@@ -30,8 +31,8 @@ def main():
     if not build.exists():
         fail(f"no build.py in {deck_dir}")
 
-    if args.no_pdf:
-        os.environ["SLIDER_NO_PDF"] = "1"
+    if args.pdf:
+        os.environ["SLIDER_PDF"] = "1"
 
     sys.path.insert(0, str(deck_dir))   # so `import data` works
     print(f"building {deck_dir}/")

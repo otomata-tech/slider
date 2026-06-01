@@ -129,22 +129,21 @@ class Deck:
 
     def export_pdf(self, pptx_path: str | os.PathLike,
                    pdf_path: str | os.PathLike | None = None) -> str | None:
-        """Convert pptx → pdf via LibreOffice.
+        """Convert pptx → pdf via LibreOffice — **opt-in**.
 
-        Returns the PDF path, or None if PDF export is unavailable/disabled:
-          - SLIDER_NO_PDF=1 in env (e.g. `slide-craft build --no-pdf` sets it)
-          - LibreOffice not installed (graceful skip with a one-line notice)
+        Le livrable par défaut est le PPTX. Le PDF n'est produit que sur demande
+        explicite : ``SLIDER_PDF=1`` dans l'env (posé par ``slide-craft build --pdf``
+        ou par ``slide-craft preview``, qui en a besoin pour rendre les PNG).
+        Retourne le chemin du PDF, ou None s'il n'est pas demandé / indisponible.
         """
         from lib.pdf_export import pptx_to_pdf, soffice_path
 
         if _lint_mode():
-            return None  # no-op : pas de build en mode lint
-        if os.environ.get("SLIDER_NO_PDF") == "1":
-            print("PDF skipped (SLIDER_NO_PDF=1)")
             return None
+        if os.environ.get("SLIDER_PDF") != "1":
+            return None  # PDF opt-in : par défaut PPTX seul
         if soffice_path() is None:
-            print("PDF skipped (LibreOffice not found — install it for PDF export, "
-                  "or pass --no-pdf to silence this).")
+            print("PDF demandé mais LibreOffice introuvable — PPTX seul.")
             return None
         return pptx_to_pdf(pptx_path, pdf_path)
 
