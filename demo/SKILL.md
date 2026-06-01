@@ -52,23 +52,29 @@ Tous les scripts sont sous `scripts/`. Appel par chemin absolu (cf. « Invocatio
 
 ```bash
 "$SC" list-layouts                          # catalogue des masques
+"$SC" layout-info <nom>                     # signature + kwargs d'un masque
 "$SC" list-chartes                          # marques dispo
 "$SC" extract-pptx <source.pptx> <dest>     # texte + assets d'un pptx
 "$SC" extract-pdf <source.pdf> <dest>       # texte + images + bboxes d'un pdf
 "$SC" new <nom> --charte=<name>             # scaffold d'un nouveau deck
+"$SC" lint <deck-dir>                       # VALIDE data/build avant le build
 "$SC" build <deck-dir>                      # build.py + export PDF
+"$SC" preview <deck-dir>                    # PNG par slide + planche-contact
 ```
 
 ## Workflow standard
 
 Voir `guides/` pour les 4 recettes complètes. Aperçu général :
 
-1. **Comprendre** : charte cible ? Contenu source ? Layouts adéquats ?
+1. **Comprendre** : charte cible ? Contenu source ? Layouts adéquats ? (`layout-info <nom>` pour la signature exacte d'un masque avant de remplir ses kwargs.)
 2. **Scaffolder** : `slide-craft new` crée la structure `data.py` + `build.py`.
 3. **Modéliser** : remplir `data.py` (manuellement ou via extraction).
 4. **Composer** : éditer `build.py` pour orchestrer les `deck.add(layout, ...)`.
-5. **Builder** : `slide-craft build` → PPTX + PDF.
-6. **Réviser** : ouvrir le PDF, ajuster, rebuilder.
+5. **Valider** : `slide-craft lint <deck>` **AVANT de builder** — attrape les kwargs inconnus/manquants et les images absentes en une passe, au lieu de planter slide par slide au build. Corriger jusqu'à `✓`.
+6. **Builder** : `slide-craft build` → PPTX + PDF.
+7. **Réviser** : `slide-craft preview <deck>` → PNG par slide + `out/preview/contact-sheet.png`. **Lire la planche-contact** pour s'auto-réviser (débordement, carte vide, hiérarchie) et la montrer à l'utilisateur. Ajuster, re-lint, rebuild.
+
+> Toujours `lint` avant `build`, et `preview` après `build` : c'est ce qui rend la composition fiable (pas d'aller-retours d'erreurs runtime) et permet de réviser sans ouvrir PowerPoint. En environnement sans LibreOffice, `preview` prévient et livre le PPTX seul.
 
 ## Pré-requis système
 

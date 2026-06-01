@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""Rend un deck en PNG + planche-contact, pour la revue visuelle.
+
+Build le deck, puis convertit le PDF en une image par slide et assemble une
+contact-sheet (toutes les slides en vignettes). Permet à Claude (ou à l'humain)
+de réviser le rendu sans ouvrir PowerPoint. Filtre le warning MuPDF parasite.
+
+Usage :
+    slide-craft preview <deck-dir>
+"""
+from __future__ import annotations
+
+import math
+import os
+import runpy
+import sys
+from pathlib import Path
+
+from _common import PROJECT, fail
+
+
+def main():
+    if len(sys.argv) < 2:
+        fail("usage: slide-craft preview <deck-dir>")
+    deck = Path(sys.argv[1]).expanduser().resolve()
+    build = deck / "build.py"
+    if not build.exists():
+        fail(f"build.py introuvable dans {deck}")
+
+    sys.path.insert(0, str(PROJECT))
+
+    # 1. build (mode normal) — produit out/*.pptx + out/*.pdf
+    prev = os.getcwd()
+    os.chdir(deck)
+    try:
+        runpy.run_path(str(build), run_name="__main__")
+    finally:
+        os.chdir(prev)
+
+    pdfs = sorted((deck / "out").glob("*.pdf"))
+    if not pdfs:
+        print("preview : pas de PDF (LibreOffice absent ?) — rendu visuel indisponible.")
+        print("          Le PPTX reste dans out/. Ouvre-le dans PowerPoint pour réviser.")
+        sys.exit(0)
+    pdf = pdfs[0]
+
+    try:
+        import fitz  # PyMuPDF
+    except ImportError:
+        fail("PyMuPDF (fitz) requis pour le rendu : pip install --user PyMuPDF")
+    from PIL import Image
+
+    fitz.TOOLS.mupdf_display_errors(False)  # coupe « No common ancestor… »
+
+    pdir = deck / "out" / "preview"
+    pdir.mkdir(parents=True, exist_ok=True)
+    for old in pdir.glob("slide-*.png"):
+        old.unlink()
+
+    doc = fitz.open(str(pdf))
+    pages = []
+    for i, page in enumerate(doc, 1):
+        pix = page.get_pixmap(dpi=110)
+        out = pdir / f"slide-{i:02d}.png"
+        pix.save(str(out))
+        pages.append(out)
+
+    # contact-sheet : grille de vignettes
+    cols = 3 if len(pages) > 4 else max(1, len(pages))
+    rows = math.ceil(len(pages) / cols)
+    thumb_w = 520
+    pad, bg = 18, (248, 250, 249)
+    th = None
+    thumbs = []
+    for p in pages:
+        im = Image.open(p).convert("RGB")
+        scale = thumb_w / im.width
+        t = im.resize((thumb_w, int(im.height * scale)))
+        thumbs.append(t)
+        th = t.height
+    sheet_w = cols * thumb_w + (cols + 1) * pad
+    sheet_h = rows * th + (rows + 1) * pad
+    sheet = Image.new("RGB", (sheet_w, sheet_h), bg)
+    for idx, t in enumerate(thumbs):
+        r, c = divmod(idx, cols)
+        x = pad + c * (thumb_w + pad)
+        y = pad + r * (th + pad)
+        sheet.paste(t, (x, y))
+    cs = pdir / "contact-sheet.png"
+    sheet.save(str(cs))
+
+    print(f"✓ {len(pages)} slides rendues → {pdir}/slide-*.png")
+    print(f"✓ planche-contact → {cs}")
+
+
+if __name__ == "__main__":
+    main()

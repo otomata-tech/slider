@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""Valide un deck AVANT le build : kwargs vs signatures + existence des images.
+
+Exécute le build.py du deck en mode lint (Deck.add valide chaque appel au lieu
+de rendre), puis restitue toutes les violations d'un coup — au lieu de planter
+slide par slide au build.
+
+Usage :
+    slide-craft lint <deck-dir>
+"""
+from __future__ import annotations
+
+import os
+import runpy
+import sys
+from pathlib import Path
+
+from _common import PROJECT, fail
+
+
+def main():
+    if len(sys.argv) < 2:
+        fail("usage: slide-craft lint <deck-dir>")
+    deck = Path(sys.argv[1]).expanduser().resolve()
+    build = deck / "build.py"
+    if not build.exists():
+        fail(f"build.py introuvable dans {deck}")
+
+    os.environ["SLIDE_CRAFT_LINT"] = "1"
+    sys.path.insert(0, str(PROJECT))
+    import lib.deck as deckmod
+    deckmod._LINT_ISSUES.clear()
+
+    # cwd = dossier du deck → les chemins image relatifs se résolvent comme au build
+    prev = os.getcwd()
+    os.chdir(deck)
+    try:
+        runpy.run_path(str(build), run_name="__main__")
+    except Exception as e:  # une erreur d'exécution du build.py est elle-même un défaut
+        os.chdir(prev)
+        fail(f"build.py a levé une exception à l'exécution : {type(e).__name__}: {e}")
+    os.chdir(prev)
+
+    issues = deckmod._LINT_ISSUES
+    errors = [i for i in issues if i["level"] == "error"]
+    warns = [i for i in issues if i["level"] == "warn"]
+
+    if not issues:
+        print(f"✓ {deck.name} : conforme — kwargs et images valides.")
+        sys.exit(0)
+
+    for i in sorted(issues, key=lambda x: (x["page"], x["level"])):
+        mark = "✗" if i["level"] == "error" else "⚠"
+        print(f"  {mark} slide {i['page']} ({i['layout']}) : {i['msg']}")
+    print(f"\n→ {len(errors)} erreur(s), {len(warns)} avertissement(s). "
+          f"Corrige avant de builder." if errors else
+          f"\n→ {len(warns)} avertissement(s) (images). Build possible.")
+    sys.exit(1 if errors else 0)
+
+
+if __name__ == "__main__":
+    main()
