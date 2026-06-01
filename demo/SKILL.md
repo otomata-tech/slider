@@ -37,6 +37,7 @@ L'utilisateur veut :
 - **Ajouter un nouveau type de slide** → workflow [`guides/03-add-layout.md`](guides/03-add-layout.md)
 - **Ajouter une charte client** → workflow [`guides/04-add-charte.md`](guides/04-add-charte.md)
 - **Re-créer un deck à partir d'un PDF source** → workflow [`guides/05-from-pdf.md`](guides/05-from-pdf.md)
+- **Construire un deck à partir d'un document rédigé** (mémo, note) → workflow [`guides/06-from-document.md`](guides/06-from-document.md)
 
 ## Conventions à respecter
 

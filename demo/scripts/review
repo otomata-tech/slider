@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""Audit de conformité charte d'un PPTX (lint des slides).
+
+Parcourt chaque run de texte et chaque aplat de couleur d'un .pptx et les
+confronte à la charte cible :
+  - couleurs hex hors-palette
+  - polices hors-charte
+  - titres (gros texte) non capitalisés
+  - puces non-« + » (rondes, tirets, triangles)
+
+Sortie lisible + compteurs. Déterministe : c'est le socle que le skill
+`deck-review` interprète pour proposer des correctifs.
+
+Usage :
+    slide-craft review <source.pptx> --charte=<name>
+"""
+from __future__ import annotations
+
+import argparse
+import sys
+from collections import defaultdict
+
+from _common import PROJECT, fail
+
+sys.path.insert(0, str(PROJECT))
+from pptx import Presentation
+from pptx.util import Emu
+from lib.charte import Charte
+
+# Glyphes de puce non conformes (le kit impose « + » vert / « – » rouge).
+BAD_BULLETS = {"•", "▸", "▪", "◦", "‣", "·", "●", "*", "›", "–·"}
+TITLE_PT = 18.0  # au-delà, on considère le run comme un titre → doit être CAPS
+
+
+def _hex(rgb) -> str:
+    return str(rgb).upper().lstrip("#")
+
+
+def _charte_palette(ca) -> set[str]:
+    return {_hex(v["value"]) for v in ca.tokens.get("colors", {}).values()}
+
+
+def _charte_fonts(ca) -> set[str]:
+    f = ca.tokens.get("fonts", {}).get("primary", {})
+    names = [f.get("family", "")] + f.get("fallback", [])
+    return {n.lower() for n in names if n}
+
+
+def _run_color(run):
+    try:
+        if run.font.color and run.font.color.type is not None:
+            return run.font.color.rgb
+    except (AttributeError, TypeError):
+        pass
+    return None
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("source", help="deck .pptx à auditer")
+    ap.add_argument("--charte", required=True, help="charte de référence")
+    args = ap.parse_args()
+
+    try:
+        ca = Charte.load(args.charte)
+    except FileNotFoundError as e:
+        fail(str(e))
+
+    palette = _charte_palette(ca)
+    fonts = _charte_fonts(ca)
+
+    prs = Presentation(args.source)
+    bad_colors: dict[str, list[int]] = defaultdict(list)
+    bad_fonts: dict[str, list[int]] = defaultdict(list)
+    bad_titles: list[tuple[int, str]] = []
+    bad_bullets: list[tuple[int, str]] = []
+    n_runs = 0
+
+    for idx, slide in enumerate(prs.slides, 1):
+        for shape in slide.shapes:
+            # aplats de forme
+            try:
+                if shape.fill.type is not None and shape.fill.fore_color.type is not None:
+                    h = _hex(shape.fill.fore_color.rgb)
+                    if h not in palette:
+                        bad_colors[h].append(idx)
+            except (AttributeError, TypeError, ValueError):
+                pass
+            if not shape.has_text_frame:
+                continue
+            for para in shape.text_frame.paragraphs:
+                ptext = "".join(r.text for r in para.runs).strip()
+                if ptext and ptext[0] in BAD_BULLETS:
+                    bad_bullets.append((idx, ptext[:50]))
+                for run in para.runs:
+                    if not run.text.strip():
+                        continue
+                    n_runs += 1
+                    name = run.font.name
+                    if name and name.lower() not in fonts:
+                        bad_fonts[name].append(idx)
+                    rgb = _run_color(run)
+                    if rgb is not None and _hex(rgb) not in palette:
+                        bad_colors[_hex(rgb)].append(idx)
+                    sz = run.font.size
+                    if sz and Emu(sz).pt >= TITLE_PT:
+                        t = run.text.strip()
+                        if t and t.upper() != t and any(c.isalpha() for c in t):
+                            bad_titles.append((idx, t[:50]))
+
+    # ---- rapport ----
+    def head(s): print(f"\n{s}")
+    print(f"Audit charte « {ca.tokens.get('label', args.charte)} » — "
+          f"{len(prs.slides._sldIdLst)} slides, {n_runs} runs de texte")
+
+    issues = 0
+    if bad_colors:
+        head("✗ Couleurs hors-palette :")
+        for h, slides in sorted(bad_colors.items()):
+            u = sorted(set(slides))
+            print(f"    #{h}  ({len(slides)}×, slides {u[:8]})")
+            issues += 1
+    if bad_fonts:
+        head("✗ Polices hors-charte :")
+        for n, slides in sorted(bad_fonts.items()):
+            print(f"    {n}  (slides {sorted(set(slides))[:8]})")
+            issues += 1
+    if bad_titles:
+        head(f"✗ Titres non capitalisés ({len(bad_titles)}) :")
+        for idx, t in bad_titles[:12]:
+            print(f"    slide {idx} : « {t} »")
+        issues += len(bad_titles)
+    if bad_bullets:
+        head(f"✗ Puces non conformes ({len(bad_bullets)}) — le kit impose « + »/« – » :")
+        for idx, t in bad_bullets[:12]:
+            print(f"    slide {idx} : « {t} »")
+        issues += len(bad_bullets)
+
+    if issues == 0:
+        print("\n✓ Conforme : aucune dérive détectée vs la charte.")
+    else:
+        print(f"\n→ {issues} familles de dérives. "
+              f"Palette de référence : {sorted(palette)[:6]}…")
+    sys.exit(1 if issues else 0)
+
+
+if __name__ == "__main__":
+    main()
