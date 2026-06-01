@@ -20,6 +20,21 @@ Voir [`README.md`](./README.md) pour la vue d'ensemble.
 
 Aucun service externe, aucun bundler.
 
+## Skills du plugin
+
+Le plugin `slider` expose 4 skills (famille cohérente, un verbe chacun) :
+
+| Skill | Verbe | Rôle |
+|---|---|---|
+| `install` | installer | setup env (deps, LibreOffice, charte au chemin stable) |
+| `slide-craft` | composer | créer / nettoyer un deck, ajouter masque/charte, charts, depuis doc |
+| `deck-review` | auditer | lint de conformité charte d'un `.pptx` (`slide-craft review`) |
+| `charte-extract` | dériver | nouveau thème depuis un PPTX corporate (`slide-craft extract-charte`) |
+
+Règle : **un skill = un workflow** (pilotage), pas une primitive. Les primitives (un masque, un helper, un sous-format) vivent dans `slide-craft`, pas dans un skill séparé — c'est pourquoi `chart_block` (charts) et le guide `from-document` (mémo→deck) sont DANS `slide-craft`, pas des skills.
+
+Câblage : `skills/<name>/SKILL.md` (réel) + symlink `.claude/skills/<name>` (dev in-repo). `slide-craft` est le symlink `skills/slide-craft → ../demo`.
+
 ## Chrome & composants PCDI
 
 Charte `credit-agricole` = **système de design PCDI Capital Innovation** (kit juin 2026). Deux briques partagées :
@@ -39,6 +54,7 @@ Masques cohérents charte mais distincts. **Gabarits natifs PCDI** (kit) :
 | `thesis_two_col`     | thèse 2 colonnes + rangée de stat-cards (kit slide 17)  |
 | `company_zoom`       | logo + pastille reco + valo + description (kit slide 18)|
 | `comparison_table`   | tableau : en-tête mint, indicateurs circulaires (s.12)  |
+| `chart_block`        | graphique natif PPTX (bar/line/donut) en couleurs charte|
 
 Masques génériques (reskinés PCDI automatiquement via `ca.color`) :
 

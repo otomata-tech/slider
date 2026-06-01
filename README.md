@@ -15,7 +15,7 @@ claude plugin marketplace add otomata-tech/slider
 claude plugin install slider@slider-dev
 ```
 
-Les skills `install` et `slide-craft` sont alors disponibles dans toutes tes sessions. Pour mettre à jour : `claude plugin update slider`.
+Les skills `install`, `slide-craft`, `deck-review` et `charte-extract` sont alors disponibles dans toutes tes sessions. Pour mettre à jour : `claude plugin update slider@slider-dev`.
 
 ### Option B — Clone direct
 

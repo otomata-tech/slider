@@ -19,8 +19,10 @@ Usage:
   slide-craft layout-info <name>                 show kwargs of a masque
   slide-craft list-chartes                       list available marques
   slide-craft extract-pptx <source.pptx> <dest>  extract text + assets
+  slide-craft extract-charte <source.pptx> ...   derive a theme (colors/fonts)
   slide-craft new <name> [--charte=...]          scaffold a new deck
   slide-craft build <deck-dir>                   build PPTX + PDF
+  slide-craft review <deck.pptx> --charte=...    audit charte-compliance
 
 Workflows in $DIR/../guides/
 EOF

@@ -1,0 +1,150 @@
+#!/usr/bin/env python3
+"""Dérive un squelette de thème (tokens) d'un PPTX corporate / brand book.
+
+Classe les couleurs et polices dominantes (par fréquence d'usage) et propose
+une affectation de rôle (bg / text / primary / accents) via des heuristiques de
+luminance et saturation. Le socle déterministe ; le skill `charte-extract`
+affine ensuite les rôles et complète assets + tokens.
+
+Usage :
+    slide-craft extract-charte <source.pptx> [--name=<theme>] [--out=<dir>]
+
+Sans --out : affiche le classement. Avec --out : écrit <out>/<name>/tokens.json
+(squelette à raffiner) + un rapport.
+"""
+from __future__ import annotations
+
+import argparse
+import colorsys
+import json
+import sys
+from collections import Counter
+from pathlib import Path
+
+from _common import PROJECT, fail
+
+sys.path.insert(0, str(PROJECT))
+from pptx import Presentation
+
+
+def _hex(rgb) -> str:
+    return str(rgb).upper().lstrip("#")
+
+
+def _lum(h: str) -> float:
+    r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _sat(h: str) -> float:
+    r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    return colorsys.rgb_to_hls(r, g, b)[2]
+
+
+def _role_hint(h: str) -> str:
+    lum, sat = _lum(h), _sat(h)
+    if lum > 0.9:
+        return "bg (clair)"
+    if lum < 0.18:
+        return "text (sombre)"
+    if sat > 0.4:
+        return "couleur de marque (saturée)"
+    return "neutre / gris"
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("source")
+    ap.add_argument("--name", default="nouveau-theme")
+    ap.add_argument("--out", default=None)
+    args = ap.parse_args()
+
+    if not Path(args.source).exists():
+        fail(f"introuvable : {args.source}")
+
+    prs = Presentation(args.source)
+    colors: Counter = Counter()
+    fonts: Counter = Counter()
+
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            try:
+                if shape.fill.type is not None and shape.fill.fore_color.type is not None:
+                    colors[_hex(shape.fill.fore_color.rgb)] += 1
+            except (AttributeError, TypeError, ValueError):
+                pass
+            if not shape.has_text_frame:
+                continue
+            for para in shape.text_frame.paragraphs:
+                for run in para.runs:
+                    if not run.text.strip():
+                        continue
+                    if run.font.name:
+                        fonts[run.font.name] += 1
+                    try:
+                        if run.font.color and run.font.color.type is not None:
+                            colors[_hex(run.font.color.rgb)] += 1
+                    except (AttributeError, TypeError, ValueError):
+                        pass
+
+    top_colors = colors.most_common(14)
+    top_fonts = fonts.most_common(6)
+
+    print(f"Thème dérivé de « {Path(args.source).name} » — "
+          f"{len(prs.slides._sldIdLst)} slides")
+    print("\nCouleurs dominantes (hex · usages · rôle probable) :")
+    for h, n in top_colors:
+        print(f"    #{h}  {n:>4}×   {_role_hint(h)}")
+    print("\nPolices dominantes :")
+    for f, n in top_fonts:
+        print(f"    {f}  ({n}×)")
+
+    if not args.out:
+        print("\n→ Relancer avec --out=<dir> pour écrire un squelette tokens.json.")
+        return
+
+    # squelette : assigne par heuristique, à raffiner ensuite
+    by_lum = sorted((h for h, _ in top_colors), key=_lum)
+    darks = [h for h in by_lum if _lum(h) < 0.3]            # plus sombre d'abord
+    lights = [h for h in reversed(by_lum) if _lum(h) > 0.85]  # plus clair d'abord (bg)
+    brand = sorted((h for h, _ in top_colors if 0.18 <= _lum(h) <= 0.85 and _sat(h) > 0.35),
+                   key=lambda h: -colors[h])
+
+    def pick(lst, default):
+        return f"#{lst[0]}" if lst else default
+
+    tokens = {
+        "$schema": "../_schema/charte.schema.json",
+        "name": args.name,
+        "label": args.name,
+        "source": f"extract-charte depuis {Path(args.source).name}",
+        "notes": "SQUELETTE auto-dérivé — rôles à valider/raffiner par le skill charte-extract.",
+        "colors": {
+            "primary":     {"value": pick(brand, "#2563EB"), "name": "Marque", "usage": "à valider"},
+            "text":        {"value": pick(darks, "#1A1A1A"), "name": "Encre", "usage": "texte"},
+            "text-strong": {"value": "#000000", "name": "Noir", "usage": "titres contrastés"},
+            "muted":       {"value": "#4B5563", "name": "Gris", "usage": "secondaire"},
+            "rule":        {"value": "#E5E7EB", "name": "Filet", "usage": "bordures"},
+            "bg":          {"value": pick(lights, "#FFFFFF"), "name": "Fond", "usage": "fond"},
+            "bg-soft":     {"value": "#F5F5F5", "name": "Fond doux", "usage": "alt"},
+        },
+        "_palette_brute": [f"#{h}" for h, _ in top_colors],
+        "fonts": {
+            "primary": {
+                "family": top_fonts[0][0] if top_fonts else "Inter",
+                "fallback": ["Helvetica Neue", "Arial", "sans-serif"],
+                "weights": [400, 600, 700],
+            }
+        },
+    }
+
+    dest = Path(args.out) / args.name
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / "tokens.json").write_text(
+        json.dumps(tokens, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"\n✓ Squelette écrit : {dest}/tokens.json")
+    print("  → à raffiner (rôles, accents, defaults) + ajouter assets/ (logos, photo, fonts).")
+
+
+if __name__ == "__main__":
+    main()
