@@ -135,4 +135,4 @@ SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"
 "$SC" build decks/mon-deck         # produire le PPTX (+ PDF si LibreOffice)
 ```
 
-Et pointer vers le skill `slide-craft` pour la suite (composition, mise au propre d'un PPTX existant, etc.).
+Et pointer vers le skill `deck` pour la suite (composition, mise au propre d'un PPTX existant, etc.).

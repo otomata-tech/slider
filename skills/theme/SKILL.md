@@ -1,28 +1,32 @@
 ---
-name: charte-extract
-description: "Dérive un nouveau thème slide-craft (tokens.json + assets) à partir d'un PPTX corporate ou d'un brand book : couleurs dominantes, polices, logos. Utiliser quand l'utilisateur dit 'crée une charte depuis ce pptx', 'extrais le thème de ce deck', 'fais un thème pour le client X à partir de leur template', 'dérive les tokens de cette présentation'."
-argument-hint: "<source.pptx> --name=<theme>"
+name: theme
+description: "Crée ou édite un thème (charte) : tokens.json + assets. Soit de zéro, soit dérivé d'un PPTX corporate / brand book (couleurs dominantes, polices, logos). Utiliser quand l'utilisateur dit 'crée une charte', 'crée une charte depuis ce pptx', 'extrais le thème de ce deck', 'fais un thème pour le client X', 'édite le thème', 'ajoute une couleur à la charte'."
+argument-hint: "[<source.pptx> --name=<theme>]"
 ---
 
-# charte-extract
+# theme
 
-Crée un **thème** (charte) à partir d'un support de marque existant : un PPTX
-corporate, un template client, un brand book exporté en PPTX. Produit le squelette
-`chartes/<name>/` que `slide-craft` consommera ensuite.
+Crée ou édite un **thème** (charte) : la palette, les polices, les assets qui
+définissent le look. Deux voies :
+
+- **De zéro** : scaffolder un `chartes/<name>/tokens.json` et le remplir à la main
+  → suivre le guide [`../../demo/guides/04-add-charte.md`](../../demo/guides/04-add-charte.md).
+- **Dérivé d'un support de marque** (PPTX corporate, template client, brand book
+  en PPTX) → procédure ci-dessous (`extract-charte`).
 
 ## Invocation du CLI
 
 ```bash
 SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"
 ```
-(à redéfinir dans chaque appel Bash — cf. le skill `slide-craft`.)
+(à redéfinir dans chaque appel Bash — cf. le skill `deck`.)
 
 ## Distinction avec les autres skills
 
-- **`charte-extract`** (ici) : source → **thème** (tokens + assets). On veut produire une *charte réutilisable*.
-- **`slide-craft` / `from-pdf` / `cleanup-existing`** : source → **un deck** dans une charte *déjà existante*.
+- **`theme`** (ici) : source → **thème** (tokens + assets). On produit une *charte réutilisable*.
+- **`deck`** (`from-pdf` / `cleanup-existing`) : source → **un deck** dans une charte *déjà existante*.
 
-Si l'utilisateur veut juste refaire UN deck, ce n'est pas ce skill → `slide-craft`.
+Si l'utilisateur veut juste refaire UN deck, ce n'est pas ce skill → `deck`.
 
 ## Procédure
 

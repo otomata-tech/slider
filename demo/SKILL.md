@@ -1,6 +1,6 @@
 ---
-name: slide-craft
-description: "Produit des decks PowerPoint propres (PPTX + PDF) à partir d'une charte client, en composant des masques (layouts) réutilisables. Accepte aussi un PDF en source (extraction texte + images + layout). Utiliser quand l'utilisateur dit 'mets au propre ce pptx ou ce pdf', 'crée un benchmark', 'fais un deck X dans la charte Y'."
+name: deck
+description: "Produit des decks PowerPoint propres (PPTX + PDF) à partir d'une charte client, en composant des masques (layouts) réutilisables. Accepte aussi un PDF ou un document rédigé en source. Utiliser quand l'utilisateur dit 'fais un deck X dans la charte Y', 'mets au propre ce pptx ou ce pdf', 'transforme ce mémo en deck', 'crée un benchmark'."
 argument-hint: "[cleanup <source.pptx|pdf> | new <nom> --charte=<charte> | build <deck-dir> | list-layouts | list-chartes]"
 ---
 

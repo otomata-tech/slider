@@ -118,7 +118,7 @@ def main():
         "name": args.name,
         "label": args.name,
         "source": f"extract-charte depuis {Path(args.source).name}",
-        "notes": "SQUELETTE auto-dérivé — rôles à valider/raffiner par le skill charte-extract.",
+        "notes": "SQUELETTE auto-dérivé — rôles à valider/raffiner par le skill theme.",
         "colors": {
             "primary":     {"value": pick(brand, "#2563EB"), "name": "Marque", "usage": "à valider"},
             "text":        {"value": pick(darks, "#1A1A1A"), "name": "Encre", "usage": "texte"},
