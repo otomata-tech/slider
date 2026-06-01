@@ -6,7 +6,7 @@ argument-hint: "[cleanup <source.pptx|pdf> | new <nom> --charte=<charte> | build
 
 # slide-craft
 
-Atelier pour fabriquer des decks 16:9 (PPTX éditable + PDF de livraison) qui respectent strictement une charte de marque. PowerPoint est le format canonique : python-pptx construit, LibreOffice exporte en PDF — ce qui garantit que le PDF montre exactement ce que verra l'ouverture dans PowerPoint.
+Atelier pour fabriquer des decks 16:9 qui respectent strictement une charte de marque. **Le livrable est le PPTX éditable** ; un PDF peut être exporté à la demande (`build --pdf`). PowerPoint est le format canonique : python-pptx construit, LibreOffice exporte en PDF si demandé.
 
 ## Invocation du CLI (à lire en premier)
 
@@ -44,7 +44,7 @@ L'utilisateur veut :
 1. **Jamais de couleur ou font hardcodée** dans un layout ou un build script. Toujours via `ca.color("primary")`, `ca.font_primary`, `ca.token_size("h1")`. Si la valeur manque dans la charte, l'ajouter à `tokens.json` plutôt que la hardcoder.
 2. **Slides au format 16:9** : `33.867 × 19.05 cm` (constantes `lib.pptx_helpers.SLIDE_W_CM/H_CM`).
 3. **`data.py` décrit le contenu, `build.py` assemble**. Le contenu et la composition restent séparés.
-4. **Trois sorties par deck** : `out/deck.pptx` (éditable), `out/deck.pdf` (livraison). Le viewer interactif n'est pas systématique.
+4. **Livrable = `out/deck.pptx`** (éditable). Le **PDF** et les **PNG** ne sont **pas produits par défaut** : seulement à la demande explicite de l'utilisateur (`build --pdf`, `preview`).
 
 ## Outils en ligne de commande
 
@@ -58,8 +58,9 @@ Tous les scripts sont sous `scripts/`. Appel par chemin absolu (cf. « Invocatio
 "$SC" extract-pdf <source.pdf> <dest>       # texte + images + bboxes d'un pdf
 "$SC" new <nom> --charte=<name>             # scaffold d'un nouveau deck
 "$SC" lint <deck-dir>                       # VALIDE data/build avant le build
-"$SC" build <deck-dir>                      # build.py + export PDF
-"$SC" preview <deck-dir>                    # PNG par slide + planche-contact
+"$SC" build <deck-dir>                      # → out/deck.pptx (livrable par défaut)
+"$SC" build <deck-dir> --pdf                # + out/deck.pdf (seulement si demandé)
+"$SC" preview <deck-dir>                    # PNG par slide + planche-contact (à la demande)
 ```
 
 ## Workflow standard
@@ -71,10 +72,9 @@ Voir `guides/` pour les 4 recettes complètes. Aperçu général :
 3. **Modéliser** : remplir `data.py` (manuellement ou via extraction).
 4. **Composer** : éditer `build.py` pour orchestrer les `deck.add(layout, ...)`.
 5. **Valider** : `slide-craft lint <deck>` **AVANT de builder** — attrape les kwargs inconnus/manquants et les images absentes en une passe, au lieu de planter slide par slide au build. Corriger jusqu'à `✓`.
-6. **Builder** : `slide-craft build` → PPTX + PDF.
-7. **Réviser** : `slide-craft preview <deck>` → PNG par slide + `out/preview/contact-sheet.png`. **Lire la planche-contact** pour s'auto-réviser (débordement, carte vide, hiérarchie) et la montrer à l'utilisateur. Ajuster, re-lint, rebuild.
+6. **Builder** : `slide-craft build <deck>` → **`out/deck.pptx`** (le livrable). Ajoute `--pdf` **uniquement si l'utilisateur demande un PDF**.
 
-> Toujours `lint` avant `build`, et `preview` après `build` : c'est ce qui rend la composition fiable (pas d'aller-retours d'erreurs runtime) et permet de réviser sans ouvrir PowerPoint. En environnement sans LibreOffice, `preview` prévient et livre le PPTX seul.
+> **Sorties à la demande, pas par défaut.** Le livrable est le PPTX. Ne produis un **PDF** que si l'utilisateur le demande (`build --pdf`). Ne génère des **PNG** (`preview`) que si l'utilisateur veut un rendu image, ou si *tu* as besoin de vérifier visuellement un point précis — pas systématiquement. `lint` avant `build` reste la garde standard (rapide, pas de fichier produit).
 
 ## Pré-requis système
 

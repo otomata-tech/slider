@@ -29,7 +29,9 @@ def main():
 
     sys.path.insert(0, str(PROJECT))
 
-    # 1. build (mode normal) — produit out/*.pptx + out/*.pdf
+    # 1. build — preview a besoin du PDF pour rendre les PNG, on le force ici
+    #    (le PDF reste opt-in côté `build`).
+    os.environ["SLIDER_PDF"] = "1"
     prev = os.getcwd()
     os.chdir(deck)
     try:

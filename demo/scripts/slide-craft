@@ -22,8 +22,8 @@ Usage:
   slide-craft extract-charte <source.pptx> ...   derive a theme (colors/fonts)
   slide-craft new <name> [--charte=...]          scaffold a new deck
   slide-craft lint <deck-dir>                    validate kwargs + images pre-build
-  slide-craft build <deck-dir>                   build PPTX + PDF
-  slide-craft preview <deck-dir>                 render PNGs + contact-sheet
+  slide-craft build <deck-dir> [--pdf]           build PPTX (PDF only with --pdf)
+  slide-craft preview <deck-dir>                 render PNGs + contact-sheet (on demand)
   slide-craft review <deck.pptx> --charte=...    audit charte-compliance
 
 Workflows in $DIR/../guides/
