@@ -9,8 +9,8 @@ Voir [`README.md`](./README.md) pour la vue d'ensemble.
 - **Charte = source de vérité.** Toute couleur / font dans un slide doit venir de `chartes/<marque>/tokens.*` — jamais de hex hardcodé dans un layout ou un build.
 - **Données séparées du rendu.** `data.py` décrit le contenu, le layout choisit la composition, la charte fixe le look.
 - **Python natif, pas de DSL.** Pas de YAML / JSON config intermédiaire. Le contenu est du Python (dicts) car a) `python-pptx` impose Python, b) l'agent écrit Python aussi facilement que YAML, c) signatures typées des `render()` = contrat lisible.
-- **PDF optionnel.** Le PPTX est la source canonique ; le PDF est rendu via LibreOffice si présent, skippé proprement sinon. Ne jamais faire dépendre la pipeline de build de LO.
-- **Self-contained.** Le repo est utilisable tel quel : `cd slider && claude` détecte le skill via `.claude/skills/slide-craft → demo/` (symlink committé). Les thèmes clients sont des repos séparés clonés DANS `chartes/<client>/`.
+- **Livrable = PPTX.** Le PPTX est le seul livrable par défaut. Le PDF (`build --pdf`) et les PNG (`preview`) ne sont produits **qu'à la demande explicite de l'utilisateur**. `export_pdf` est opt-in (`SLIDER_PDF=1`). Ne jamais faire dépendre la pipeline de LibreOffice.
+- **Self-contained.** Le repo est utilisable tel quel : `cd slider && claude` détecte le skill via `.claude/skills/deck → demo/` (symlink committé). Les thèmes clients sont des repos séparés clonés DANS `chartes/<client>/`.
 
 ## Stack
 
@@ -45,6 +45,8 @@ Charte `credit-agricole` = **système de design PCDI Capital Innovation** (kit j
 - **`layouts/_components.py`** — composants réutilisables du kit : `marker_list()` (listes « + » vertes / « – » rouges, terme-clé en gras), `stat_card()` (carte mint, chiffre vert), `pill()` (pastille mint / vert plein / contour).
 
 Primitives ajoutées à `lib/pptx_helpers.py` : `add_round_rect`, `add_oval`, `set_hanging` (indent pendante), et `set_fill` désactive l'ombre (rendu plat).
+
+Assets de la charte CA (repo séparé `slider-credit-agricole`, cloné dans `chartes/credit-agricole/`) : `assets/logo/` = **identité CA** (ina, `la-fabrique`, `ca-capital-innovation`), `assets/portfolio/` = **47 logos sociétés** (content pour `logo_wall`, pas de l'identité), `assets/photo/`, `assets/fonts/` (Raleway).
 
 ## Bibliothèque de masques (`layouts/`)
 
@@ -111,6 +113,7 @@ Le plugin installé ne livre que `blank`. Une charte cliente se clone dans **`<w
 - **Polices** : `ca.font_primary` (jamais une `font_name=` hardcodée comme `"Calibri"`)
 - **Marge page** : 9mm standard
 - **Assets auto-injectés** : les layouts lisent `ca.default("cover_photo")`, `ca.default("cover_logo")`, `ca.default("header_logo")` depuis `chartes/<nom>/tokens.json#defaults` si l'appelant ne les fournit pas. Un nouveau deck n'a pas à wirer les assets de marque dans son `build.py`.
+- **Boucle de composition** : `layout-info <nom>` (signature exacte avant de remplir) → `lint <deck>` **avant** `build` (valide kwargs + chemins image, ne produit rien) → `build` (PPTX) → `preview`/`--pdf` seulement à la demande. Câblée dans le workflow du SKILL.md `deck`.
 
 ## Tâches courantes
 
