@@ -1,5 +1,7 @@
 # Ajouter une nouvelle charte (marque cliente)
 
+> **CLI** : `slide-craft <cmd>` ci-dessous = `"$SC" <cmd>` avec `SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"` (à redéfinir dans chaque appel Bash — cf. SKILL.md « Invocation du CLI »). Le binaire s'auto-localise, pas d'`activate.sh`.
+
 ## Étapes
 
 ### 1. Sourcer la charte officielle
@@ -67,9 +69,9 @@ Créer `chartes/<nom>/README.md` :
 ### 7. Valider
 
 ```bash
-slide-craft new test-<nom> --charte=<nom>
+"$SC" new test-<nom> --charte=<nom>
 # éditer data.py + build.py pour ajouter 1 cover + 1 fiche
-slide-craft build decks/test-<nom>
+"$SC" build decks/test-<nom>
 ```
 
 Ouvrir le PDF. Si les couleurs ou la police diffèrent du brand book, corriger `tokens.json` et rebuilder.

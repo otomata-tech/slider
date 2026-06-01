@@ -1,5 +1,7 @@
 # Composer un deck à partir de zéro
 
+> **CLI** : `slide-craft <cmd>` ci-dessous = `"$SC" <cmd>` avec `SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"` (à redéfinir dans chaque appel Bash — cf. SKILL.md « Invocation du CLI »). Le binaire s'auto-localise, pas d'`activate.sh`.
+
 L'utilisateur n'a pas de source — il veut un deck X dans une charte Y avec une structure narrative donnée.
 
 ## Étapes
@@ -15,7 +17,7 @@ Demander/inférer :
 ### 2. Lister les masques dispo
 
 ```bash
-slide-craft list-layouts
+"$SC" list-layouts
 ```
 
 Et lire `layouts/README.md` pour voir les aperçus.
@@ -39,7 +41,7 @@ Si un masque manque pour ta narration, créer-le avant — voir [`03-add-layout.
 ### 4. Scaffolder
 
 ```bash
-slide-craft new <nom> --charte=<charte>
+"$SC" new <nom> --charte=<charte>
 ```
 
 ### 5. Remplir `data.py`
@@ -73,7 +75,7 @@ deck.add(big_number.render,        **CONTENT["kpi_1"])
 ### 7. Builder, réviser, itérer
 
 ```bash
-slide-craft build decks/<nom>
+"$SC" build decks/<nom>
 ```
 
 Ouvrir le PDF. Quand ça part dans le mauvais sens (texte qui déborde, hiérarchie pas claire), **éditer `data.py` et rebuilder** — ne jamais bidouiller le PPTX généré directement.

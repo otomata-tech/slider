@@ -1,5 +1,7 @@
 # Re-créer un deck à partir d'un PDF source
 
+> **CLI** : `slide-craft <cmd>` ci-dessous = `"$SC" <cmd>` avec `SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"` (à redéfinir dans chaque appel Bash — cf. SKILL.md « Invocation du CLI »). Le binaire s'auto-localise, pas d'`activate.sh`.
+
 Workflow pour transformer un PDF (export PowerPoint, Keynote, deck designer…) en un deck PPTX propre dans la charte cible. Variante de [`01-cleanup-existing.md`](./01-cleanup-existing.md) adaptée au PDF.
 
 ## Pré-requis
@@ -12,7 +14,7 @@ Workflow pour transformer un PDF (export PowerPoint, Keynote, deck designer…) 
 ### 1. Extraire
 
 ```bash
-slide-craft extract-pdf <source.pdf> <dest-dir>
+"$SC" extract-pdf <source.pdf> <dest-dir>
 ```
 
 Produit :
@@ -52,7 +54,7 @@ Pattern courant pour un deck pitch :
 ### 4. Scaffolder le deck cible
 
 ```bash
-slide-craft new <nom> --charte=<charte>
+"$SC" new <nom> --charte=<charte>
 ```
 
 ### 5. Modéliser `data.py`
@@ -116,7 +118,7 @@ if __name__ == "__main__":
 ### 7. Builder + comparer
 
 ```bash
-slide-craft build decks/<nom>
+"$SC" build decks/<nom>
 ```
 
 Ouvre côte-à-côte `source.pdf` (l'original) et `out/deck.pdf` (la version charte). Note les écarts visuels (image cropée, hiérarchie texte différente, ordre des bullets) et corrige `data.py` itérativement.

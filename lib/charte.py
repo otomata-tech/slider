@@ -16,6 +16,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -29,15 +30,29 @@ from pptx.dml.color import RGBColor
 ENGINE_CHARTES = Path(__file__).resolve().parent.parent / "chartes"
 
 
+def _user_chartes() -> Path:
+    """Stable per-user chartes dir, independent of cwd and plugin updates.
+
+    ``$XDG_DATA_HOME/slider/chartes`` (default ``~/.local/share/slider/chartes``).
+    When slide-craft runs as an installed plugin, the engine lives in a
+    versioned cache that is wiped on ``claude plugin update`` — so theme repos
+    must NOT be cloned there. This dir survives updates and any cwd.
+    """
+    base = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
+    return Path(base) / "slider" / "chartes"
+
+
 def _theme_search_paths() -> list[Path]:
     """Resolve directories to search for chartes, in priority order.
 
     1. ``$PWD/chartes`` — local overrides when slide-craft is run from a
-       directory that has its own chartes/ (rare).
-    2. Engine's ``chartes/`` — where theme repos are cloned into.
+       directory that has its own chartes/ (per-deck workspace).
+    2. ``~/.local/share/slider/chartes`` — stable per-user themes, survive
+       cwd changes and plugin updates. The recommended home for client themes.
+    3. Engine's ``chartes/`` — built-in ``blank`` + themes cloned into a dev repo.
     """
-    paths = [Path.cwd() / "chartes", ENGINE_CHARTES]
-    # Dedup if cwd happens to be the engine itself.
+    paths = [Path.cwd() / "chartes", _user_chartes(), ENGINE_CHARTES]
+    # Dedup (e.g. cwd happens to be the engine, or two paths coincide).
     seen, out = set(), []
     for p in paths:
         rp = p.resolve()
@@ -84,8 +99,8 @@ class Charte:
         roots_listed = "\n  - ".join(str(p) for p in search)
         raise FileNotFoundError(
             f"Charte '{name}' not found. Searched:\n  - {roots_listed}\n"
-            f"Tip: clone the theme repo into chartes/{name}/ "
-            f"(e.g. `git clone <theme-repo> chartes/{name}`)."
+            f"Tip: clone the theme repo into the stable per-user dir "
+            f"(`git clone <theme-repo> ~/.local/share/slider/chartes/{name}`)."
         )
 
     @classmethod

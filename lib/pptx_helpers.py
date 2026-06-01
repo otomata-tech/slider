@@ -23,10 +23,11 @@ SLIDE_H_CM = 19.05
 # Shape fills / lines
 
 def set_fill(shape, rgb: RGBColor):
-    """Solid fill, no border."""
+    """Solid fill, no border, flat (no inherited theme shadow — kit is flat)."""
     shape.fill.solid()
     shape.fill.fore_color.rgb = rgb
     shape.line.fill.background()
+    shape.shadow.inherit = False
 
 
 def set_line(shape, rgb: RGBColor, width_pt: float = 0.75):
@@ -42,6 +43,46 @@ def add_rect(slide, x_cm, y_cm, w_cm, h_cm, *, fill: RGBColor | None = None):
     if fill is not None:
         set_fill(shape, fill)
     return shape
+
+
+def add_round_rect(slide, x_cm, y_cm, w_cm, h_cm, *,
+                   fill: RGBColor | None = None, radius_frac: float = 0.12):
+    """Add a rounded rectangle. `radius_frac` is the corner radius as a fraction
+    of the shorter side (0.5 = fully rounded pill). Returns the shape."""
+    shape = slide.shapes.add_shape(
+        MSO_SHAPE.ROUNDED_RECTANGLE, Cm(x_cm), Cm(y_cm), Cm(w_cm), Cm(h_cm)
+    )
+    try:
+        shape.adjustments[0] = max(0.0, min(0.5, radius_frac))
+    except (IndexError, ValueError):
+        pass
+    if fill is not None:
+        set_fill(shape, fill)
+    return shape
+
+
+def add_oval(slide, x_cm, y_cm, d_cm, *, fill: RGBColor | None = None,
+             line: RGBColor | None = None):
+    """Add a small circle/disc of diameter `d_cm`. Used for rating indicators."""
+    shape = slide.shapes.add_shape(
+        MSO_SHAPE.OVAL, Cm(x_cm), Cm(y_cm), Cm(d_cm), Cm(d_cm)
+    )
+    if fill is not None:
+        set_fill(shape, fill)
+    if line is not None:
+        set_line(shape, line, width_pt=1.0)
+        shape.fill.background()
+        shape.shadow.inherit = False
+    return shape
+
+
+def set_hanging(p, marL_cm: float):
+    """Hanging indent : wrapped lines align under the text, not the marker.
+    `marL_cm` = left margin of the text column (marker sits in the hang)."""
+    from pptx.util import Cm as _Cm
+    pPr = p._pPr if p._pPr is not None else p.get_or_add_pPr()
+    pPr.set("marL", str(int(_Cm(marL_cm))))
+    pPr.set("indent", str(-int(_Cm(marL_cm))))
 
 
 # ---------------------------------------------------------------------------
