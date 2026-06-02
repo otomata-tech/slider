@@ -29,7 +29,7 @@ Le plugin `slider` expose 4 skills (famille cohérente, un verbe chacun) :
 | `install` | setup env (deps, LibreOffice, charte au chemin stable) |
 | `deck` | créer / nettoyer / recréer un deck, ajouter masque, charts, depuis doc/pdf/pptx |
 | `review` | lint de conformité charte d'un `.pptx` (CLI `slide-craft review`) |
-| `theme` | créer / dériver / éditer une charte (CLI `slide-craft extract-charte` ou guide add-charte) |
+| `theme` | créer / dériver / éditer une charte — y compris **ingest** d'un template client (mode natif, cf. plus bas) |
 
 > **Skill ≠ CLI.** Le skill principal s'appelle **`deck`** ; le binaire moteur interne (que Claude appelle, jamais l'utilisateur) reste **`slide-craft`** (`demo/bin/slide-craft <cmd>`).
 
@@ -74,6 +74,16 @@ Masques génériques (reskinés PCDI automatiquement via `ca.color`) :
 | `big_number`       | KPI géant pleine page                                   |
 | `agenda_list`      | rail vertical horaire / activité / détail               |
 | `kpi_grid` `logo_wall` `services_grid` `case_study` `comparison_columns` | masques pitch/B2B (v1.2.0) |
+
+## Mode template-natif (ingest + NativeDeck)
+
+Deuxième voie, **à privilégier quand le client a un VRAI template PPTX** : au lieu de reskiner les masques génériques (look d'un autre kit), on remplit les **propres masques du client** → fidélité maximale. Principe : *un thème n'est pas un nuancier, c'est le template préservé*.
+
+- `slide-craft ingest <template.pptx> --name=<t>` (`lib/template.py`) → préserve `template.pptx` + `catalog.json` (layouts → placeholders avec **rôle déduit par type/position**, jamais par idx + signature + kind) + tokens dérivés du thème (clrScheme/fontScheme) + photos harvestées. Écrit dans le dossier thèmes user.
+- `slide-craft catalog <t>` → digest des masques (rôles, capacité) pour CHOISIR un masque.
+- `NativeDeck` (`lib/native.py`) : remplit PAR RÔLE (`title`/`eyebrow`/`subtitle`/`content` via `cells`|`items`|`number`/`picture` via `photo`|`icons`/`date`/`footer`), `fit_text` anti-débordement, matérialise date/footer non clonés par python-pptx, **avertit** si un champ n'a pas de cible (no silent fallback). `slide-craft new-native <deck> --theme=<t>` scaffolde ; `build`/`preview` réutilisent la tuyauterie standard.
+- **Cible = un AGENT** : introspection (`catalog`) + API + jugement de l'agent pour choisir le masque — pas de DSL no-code ni d'autopilote heuristique. Guide [`demo/guides/07-template-native.md`](./demo/guides/07-template-native.md).
+- Limite connue : la détection `subtitle` rate sur les masques à panneau gauche étroit (placeholder < 18 cm classé `content`) → sous-titre ignoré (averti). Cosmétique.
 
 ## Invocation du CLI (plugin installé vs dev)
 
@@ -137,6 +147,10 @@ Voir [`demo/guides/03-add-layout.md`](./demo/guides/03-add-layout.md).
 ### Ajouter une charte
 
 Voir [`demo/guides/04-add-charte.md`](./demo/guides/04-add-charte.md).
+
+### Refaire un deck dans le template d'un client (natif)
+
+Voir [`demo/guides/07-template-native.md`](./demo/guides/07-template-native.md) : `ingest` le template → `catalog` → `new-native` → composer par rôle → `build`/`preview`.
 
 ## Layout API
 
