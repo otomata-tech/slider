@@ -86,6 +86,7 @@ class ModelDeck:
         new = self.prs.slides.add_slide(src.slide_layout)
         for shp in list(new.shapes):                   # vider les placeholders ajoutés
             shp._element.getparent().remove(shp._element)
+        _copy_background(src, new)                      # fond de slide (<p:bg>) — sinon blanc
         for shp in src.shapes:                          # recopier les formes designées
             new.shapes._spTree.append(copy.deepcopy(shp._element))
         _remap_rels(src, new)                           # réparer les images (r:embed)
@@ -120,6 +121,19 @@ def _set_text(shape, text: str):
     p.runs[0].text = text
     for r in p.runs[1:]:
         r._r.getparent().remove(r._r)
+
+
+def _copy_background(src_slide, new_slide):
+    """Recopie le fond de slide (<p:bg>) du modèle vers le clone (doit précéder spTree)."""
+    src_cSld = src_slide._element.find(qn("p:cSld"))
+    src_bg = src_cSld.find(qn("p:bg")) if src_cSld is not None else None
+    if src_bg is None:
+        return
+    new_cSld = new_slide._element.find(qn("p:cSld"))
+    old = new_cSld.find(qn("p:bg"))
+    if old is not None:
+        new_cSld.remove(old)
+    new_cSld.insert(0, copy.deepcopy(src_bg))
 
 
 def _remap_rels(src_slide, new_slide):
