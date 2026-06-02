@@ -31,12 +31,31 @@ def main():
     except FileNotFoundError as e:
         fail(str(e))
 
-    cat = json.loads((d / "catalog.json").read_text("utf-8"))["layouts"]
+    data = json.loads((d / "catalog.json").read_text("utf-8"))
+    mode = data.get("mode", "layouts")
+
+    if mode == "models":
+        # Template sans masques : design dessiné sur les slides → on liste les MODÈLES
+        # à cloner + réécrire par ancre de texte (ModelDeck).
+        models = data["models"]
+        print(f"Thème « {args.theme} » — mode MODÈLES — {len(models)} slides-modèles\n  {d}\n")
+        for m in models:
+            print(f"▸ [{m['index']:>2}] {m['kind']:<9} « {m['name']} »"
+                  + ("  + image" if m["has_image"] else ""))
+            for a in m["anchors"]:
+                print(f"      {a['role']:<12} « {a['text']} »")
+            print()
+        print(f"→ composer : ModelDeck(\"{args.theme}\").clone(<index|nom|kind>)"
+              ".set({\"texte actuel\": \"nouveau texte\", …})")
+        print("  on clone une slide-modèle et on réécrit son texte par ANCRE (le design reste).")
+        return
+
+    cat = data["layouts"]
     groups: dict[str, list] = defaultdict(list)
     for l in cat:
         groups[l["kind"]].append(l)
 
-    print(f"Thème « {args.theme} » — {len(cat)} masques\n  {d}\n")
+    print(f"Thème « {args.theme} » — mode MASQUES — {len(cat)} layouts\n  {d}\n")
     for kind in sorted(groups):
         if args.kind and not kind.startswith(args.kind):
             continue

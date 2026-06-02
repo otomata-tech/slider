@@ -85,6 +85,10 @@ Deuxième voie, **à privilégier quand le client a un VRAI template PPTX** : au
 - **Cible = un AGENT** : introspection (`catalog`) + API + jugement de l'agent pour choisir le masque — pas de DSL no-code ni d'autopilote heuristique. Guide [`demo/guides/07-template-native.md`](./demo/guides/07-template-native.md).
 - Limite connue : la détection `subtitle` rate sur les masques à panneau gauche étroit (placeholder < 18 cm classé `content`) → sous-titre ignoré (averti). Cosmétique.
 
+**Deux sous-modes** (détectés à l'ingest, `catalog.json#mode`) :
+- `layouts` — le template a une **bibliothèque de masques** (ex. Egis, 59 layouts) → `NativeDeck` remplit les masques par rôle.
+- `models` — le template **n'a pas de masques**, le design est **dessiné sur les slides** (ex. template Otomata) → `ModelDeck` (`lib/models.py`) **clone une slide-modèle + réécrit son texte par ancre** (images recopiées via rel remap, slides-sources retirées au save). `catalog` liste alors les slides-modèles + leurs ancres.
+
 ## Invocation du CLI (plugin installé vs dev)
 
 Le CLI `slide-craft` **n'est jamais sur le `PATH`** côté skill, et `activate.sh` ne survit pas entre deux appels Bash (shells sans état). Les SKILL.md et guides appellent donc le binaire **par chemin absolu**, redéfini à chaque appel :

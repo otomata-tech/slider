@@ -40,11 +40,15 @@ def main():
     res = ingest(args.source, args.name, args.out)
 
     ok(f"✓ Thème ingéré : {res['theme']}")
-    ok(f"  • template.pptx  préservé (master + slideLayouts intacts)")
-    ok(f"  • catalog.json   {res['layouts']} layouts catalogués (placeholders + rôles + signature)")
+    ok(f"  • template.pptx  préservé")
     ok(f"  • tokens.json    police « {res['family']} » + {res['palette']} couleurs de thème")
     ok(f"  • assets/photo/  {res['photos']} photos harvestées")
-    ok("  → refaire un deck = remplir les layouts du thème par RÔLE (mode template-natif).")
+    if res["mode"] == "layouts":
+        ok(f"  • mode MASQUES   {res['layouts']} layouts catalogués (placeholders + rôles)")
+        ok(f"  → compose : slide-craft catalog {args.name} ; puis NativeDeck (remplir par rôle).")
+    else:
+        ok(f"  • mode MODÈLES   {res['models']} slides-modèles (pas de bibliothèque de masques)")
+        ok(f"  → compose : slide-craft catalog {args.name} ; puis ModelDeck (cloner + réécrire par ancre).")
 
 
 if __name__ == "__main__":

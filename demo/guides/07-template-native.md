@@ -87,3 +87,32 @@ remplis ? pas de débordement, pas de cadre gris, pas de zone vide ? Ajuste le
 
 Si aucun masque ne colle, c'est un signal : soit reformuler le contenu, soit
 l'ingest a raté un masque (vérifier `catalog`).
+
+## Mode MODÈLES — templates sans masques (design dessiné sur les slides)
+
+Certains templates n'ont **pas de bibliothèque de masques** : leur design est
+dessiné directement sur des slides d'exemple (cas fréquent des decks « éditoriaux »).
+`ingest` le détecte (`catalog.json#mode == "models"`) et catalogue les **slides-modèles**
+au lieu des masques. On les réutilise en **clonant + réécrivant** (classe `ModelDeck`).
+
+```bash
+slide-craft catalog <theme>          # liste les slides-modèles + leurs ANCRES de texte
+```
+
+```python
+from lib.models import ModelDeck
+deck = ModelDeck("<theme>")
+deck.clone("le contexte").set({      # ref = index (1-based) | nom | kind
+    "№ 01 — LE CONSTAT": "№ 01 — LE DÉFI",   # clé = texte ACTUEL (ancre), valeur = nouveau
+    "le contexte": "le problème",
+})
+deck.clone(1).set({...})             # autre modèle
+deck.save(OUT / "deck.pptx")         # ne garde que les clones ; export_pdf dispo
+```
+
+- On **clone une slide-modèle** (design, polices, couleurs, images préservés) et on
+  **réécrit son texte par ancre** (le texte actuel d'une forme). Les images sont
+  recopiées (rel remap). Les slides-sources sont retirées à `save()`.
+- Choix du modèle = **jugement de l'agent** d'après `catalog` (index/nom/kind + ancres).
+- `ModelDeck` lève une erreur sur un thème en mode `layouts` (et NativeDeck sur un
+  thème `models`) — chaque mode a son outil.

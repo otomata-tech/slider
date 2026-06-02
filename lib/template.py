@@ -215,6 +215,70 @@ def _kind(name: str, sig: dict, phs: list[dict]) -> str:
     return "content"
 
 
+# ------------------------------------------------ slides-modèles (mode « models »)
+# Pour les templates SANS bibliothèque de masques : le design est dessiné sur les
+# slides elles-mêmes. On catalogue chaque slide d'exemple comme MODÈLE réutilisable
+# (à cloner + réécrire par ancre de texte — cf. lib/models.ModelDeck).
+
+def _anchor_role(text: str, x: float, y: float, w: float, H: float) -> str:
+    low = text.strip()
+    if y > 0.85 * H:
+        if len(low) <= 4 and any(c.isdigit() for c in low):
+            return "page_number"
+        return "footer"
+    if len(low) > 45:
+        return "body"
+    if low.isupper() and len(low) <= 30:
+        return "section"          # tag de section / eyebrow en capitales
+    if y < 0.45 * H:
+        return "title"
+    return "label"
+
+
+def slide_models(pptx_path: str) -> list[dict]:
+    prs = Presentation(pptx_path)
+    H = (prs.slide_height or 1) / EMU_CM
+    out: list[dict] = []
+    for i, s in enumerate(prs.slides, 1):
+        anchors, has_image = [], False
+        for sh in s.shapes:
+            if str(sh.shape_type).startswith("PICTURE"):
+                has_image = True
+            if not sh.has_text_frame:
+                continue
+            t = sh.text_frame.text.strip()
+            if not t:
+                continue
+            anchors.append({
+                "shape_id": sh.shape_id, "text": t.replace("\n", " ")[:90],
+                "role": _anchor_role(t, _cm(sh.left), _cm(sh.top), _cm(sh.width), H),
+                "x": _cm(sh.left), "y": _cm(sh.top), "w": _cm(sh.width),
+            })
+        title = next((a["text"] for a in anchors if a["role"] == "title"), None)
+        out.append({"index": i, "name": title or f"slide {i}",
+                    "kind": _model_kind(anchors), "has_image": has_image,
+                    "anchors": anchors})
+    return out
+
+
+def _model_kind(anchors: list[dict]) -> str:
+    txts = " ".join(a["text"].lower() for a in anchors)
+    n_body = sum(1 for a in anchors if a["role"] == "body")
+    if "/" in txts and any(a["role"] == "section" for a in anchors) and n_body == 0:
+        return "divider"          # ex. « 01 / 02 » + tag de partie
+    if len(anchors) <= 3:
+        return "cover"            # peu de texte = couverture / clôture
+    return "content"
+
+
+def _has_layout_library(layouts_cat: list[dict]) -> bool:
+    """Vrai si le template porte une vraie bibliothèque de masques (mode layouts)."""
+    real = [l for l in layouts_cat
+            if l["name"].strip().upper() not in ("DEFAULT", "BLANK", "VIDE")
+            and (l["signature"]["content"] > 0 or l["signature"]["pictures"] > 0)]
+    return len(real) >= 3
+
+
 # ---------------------------------------------------------------- assets
 
 def harvest_photos(pptx_path: str, dest: Path) -> list[str]:
@@ -256,10 +320,13 @@ def ingest(src_pptx: str, name: str, out_dir: str) -> dict:
     # 1. préserver le template tel quel
     shutil.copy(src, theme / "template.pptx")
 
-    # 2. catalogue des layouts
+    # 2. catalogue — masques (mode layouts) ET/OU slides-modèles (mode models)
     cat = catalog(src_pptx)
+    models = slide_models(src_pptx)
+    mode = "layouts" if _has_layout_library(cat) else "models"
     (theme / "catalog.json").write_text(
-        json.dumps({"source": src.name, "layouts": cat}, ensure_ascii=False, indent=2),
+        json.dumps({"source": src.name, "mode": mode,
+                    "layouts": cat, "models": models}, ensure_ascii=False, indent=2),
         encoding="utf-8")
 
     # 3. tokens dérivés du thème
@@ -271,5 +338,6 @@ def ingest(src_pptx: str, name: str, out_dir: str) -> dict:
     # 4. photos
     photos = harvest_photos(src_pptx, theme / "assets" / "photo")
 
-    return {"theme": str(theme), "layouts": len(cat), "family": family,
+    return {"theme": str(theme), "mode": mode, "layouts": len(cat),
+            "models": len(models), "family": family,
             "palette": len(scheme), "photos": len(photos)}
