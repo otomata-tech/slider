@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""Scaffold un deck NATIF (NativeDeck sur un thème ingéré) dans $PWD/decks/<name>/.
+
+Produit un `build.py` de base, prérempli avec les masques disponibles du thème
+(en commentaire) — un point de départ que l'agent adapte. Ensuite : éditer
+build.py, puis `slide-craft build <dir>` et `slide-craft preview <dir>` (mêmes
+commandes que le mode classique : build exécute le build.py).
+
+Usage :
+    slide-craft new-native <name> --theme=<theme> [--path=<parent>]
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from _common import PROJECT, fail
+
+sys.path.insert(0, str(PROJECT))
+from lib.native import _find_theme  # noqa: E402
+
+
+TEMPLATE = '''"""Deck natif — remplit les masques du thème « {theme} » PAR RÔLE.
+
+Workflow (cf. guide 07-template-native) :
+  1. `slide-craft catalog {theme}`  → voir les masques + leurs rôles
+  2. composer ci-dessous (un deck.add par slide)
+  3. `slide-craft build <ce-dossier>`   puis   `slide-craft preview <ce-dossier>`
+  4. lire la planche-contact, corriger, rebuild.
+"""
+import os, sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+SLIDER = Path(os.environ.get("CLAUDE_PLUGIN_ROOT")
+              or os.environ.get("SLIDER_ROOT") or "{slider_root}")
+sys.path.insert(0, str(SLIDER))
+from lib.native import NativeDeck
+
+OUT = HERE / "out"
+
+# Masques disponibles dans « {theme} » (slide-craft catalog {theme}) :
+{catalog_comment}
+
+
+def main():
+    deck = NativeDeck("{theme}")
+
+    # Remplir PAR RÔLE. cells = une cellule par colonne/bloc ; items = une liste
+    # dans une seule box ; number = gros numéro de section ; photo/icons = images.
+    deck.add(deck.pick(kind="cover"),
+             title="Titre du document", eyebrow="Sous-titre / contexte", date="Mois AAAA")
+
+    # deck.add("<masque colonnes>", title="…", subtitle="…",
+    #          cells=[("Titre A", "desc"), ("Titre B", "desc"), ("Titre C", "desc")])
+    # deck.add("<masque chapitre>", eyebrow="Partie 01", title="Section", number="01",
+    #          photo=str(HERE / "assets" / "photo" / "image.jpg"))
+    # deck.add("<masque liste>", title="…", items=[("Nom", "desc"), ("Nom", "desc")])
+
+    pptx = deck.save(OUT / "deck.pptx")
+    print(f"PPTX → {{pptx}}")
+    pdf = deck.export_pdf(str(OUT / "deck.pptx"), str(OUT / "deck.pdf"))
+    if pdf:
+        print(f"PDF  → {{pdf}}")
+
+
+if __name__ == "__main__":
+    main()
+'''
+
+
+def _catalog_comment(theme_dir: Path) -> str:
+    cat = json.loads((theme_dir / "catalog.json").read_text("utf-8"))["layouts"]
+    from collections import defaultdict
+    groups: dict[str, list] = defaultdict(list)
+    for l in cat:
+        groups[l["kind"]].append(l["name"])
+    lines = []
+    for kind in sorted(groups):
+        names = ", ".join(groups[kind][:4])
+        lines.append(f"#   {kind:<12} : {names}")
+    return "\n".join(lines)
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="slide-craft new-native")
+    ap.add_argument("name")
+    ap.add_argument("--theme", required=True)
+    ap.add_argument("--path", default=None, type=Path)
+    args = ap.parse_args()
+
+    try:
+        theme_dir = _find_theme(args.theme)
+    except FileNotFoundError as e:
+        fail(str(e))
+
+    parent = args.path.expanduser().resolve() if args.path else (Path.cwd() / "decks")
+    dest = parent / args.name
+    if dest.exists():
+        fail(f"existe déjà : {dest}")
+
+    dest.mkdir(parents=True)
+    (dest / "out").mkdir()
+    (dest / "assets").mkdir()
+    (dest / "build.py").write_text(
+        TEMPLATE.format(theme=args.theme, slider_root=PROJECT,
+                        catalog_comment=_catalog_comment(theme_dir)),
+        encoding="utf-8")
+
+    print(f"Deck natif scaffolé : {dest}")
+    print()
+    print("Étapes :")
+    print(f"  1. slide-craft catalog {args.theme}     # voir les masques + rôles")
+    print(f"  2. éditer {dest}/build.py               # composer (deck.add par slide)")
+    print(f"  3. slide-craft build {dest}             # PPTX + PDF")
+    print(f"  4. slide-craft preview {dest}           # planche-contact, puis corriger")
+
+
+if __name__ == "__main__":
+    main()

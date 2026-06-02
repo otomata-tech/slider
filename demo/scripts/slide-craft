@@ -19,8 +19,13 @@ Usage:
   slide-craft layout-info <name>                 show kwargs of a masque
   slide-craft list-chartes                       list available marques
   slide-craft extract-pptx <source.pptx> <dest>  extract text + assets
-  slide-craft extract-charte <source.pptx> ...   derive a theme (colors/fonts)
-  slide-craft new <name> [--charte=...]          scaffold a new deck
+  slide-craft extract-charte <source.pptx> ...   derive a theme (colors/fonts only)
+  slide-craft ingest <template.pptx> --name=..   ingest a client template AS a theme
+                                                 (preserves master+layouts, catalogs them,
+                                                  derives tokens) — template-native mode
+  slide-craft catalog <theme> [--kind=..]        list a theme's layouts + roles (choose a mask)
+  slide-craft new-native <name> --theme=..       scaffold a native deck (NativeDeck build.py)
+  slide-craft new <name> [--charte=...]          scaffold a new deck (classic Python-layout mode)
   slide-craft lint <deck-dir>                    validate kwargs + images pre-build
   slide-craft build <deck-dir> [--pdf]           build PPTX (PDF only with --pdf)
   slide-craft preview <deck-dir>                 render PNGs + contact-sheet (on demand)
