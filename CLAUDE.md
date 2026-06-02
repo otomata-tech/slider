@@ -11,6 +11,7 @@ Voir [`README.md`](./README.md) pour la vue d'ensemble.
 - **Python natif, pas de DSL.** Pas de YAML / JSON config intermédiaire. Le contenu est du Python (dicts) car a) `python-pptx` impose Python, b) l'agent écrit Python aussi facilement que YAML, c) signatures typées des `render()` = contrat lisible.
 - **Livrable = PPTX.** Le PPTX est le seul livrable par défaut. Le PDF (`build --pdf`) et les PNG (`preview`) ne sont produits **qu'à la demande explicite de l'utilisateur**. `export_pdf` est opt-in (`SLIDER_PDF=1`). Ne jamais faire dépendre la pipeline de LibreOffice.
 - **Self-contained.** Le repo est utilisable tel quel : `cd slider && claude` détecte le skill via `.claude/skills/deck → demo/` (symlink committé). Les thèmes clients sont des repos séparés clonés DANS `chartes/<client>/`.
+- **Repo moteur PUBLIC → zéro contenu client.** `otomata-tech/slider` est public : jamais de branding/asset/deck client dedans. `decks/` est gitignoré ; les previews (`layouts/previews/`) se rendent avec la charte `blank`, JAMAIS un deck client ; les thèmes clients vivent dans des **repos privés séparés** (`slider-egis`, `slider-credit-agricole`) clonés dans `chartes/<client>/`, ou distribués en **zip**. Auditer arbre + historique avant tout passage public.
 
 ## Stack
 
