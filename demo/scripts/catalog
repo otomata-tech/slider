@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""Digest du catalogue d'un thème ingéré : quels masques, quels rôles, quelle capacité.
+
+Destiné à un AGENT qui compose un deck natif : il lit ça pour CHOISIR le bon
+masque avant d'appeler NativeDeck (le jugement reste à l'agent, pas à une heuristique).
+
+Usage :
+    slide-craft catalog <theme> [--kind=grid]
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections import defaultdict
+
+from _common import PROJECT, fail
+
+sys.path.insert(0, str(PROJECT))
+from lib.native import _find_theme  # noqa: E402
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="slide-craft catalog")
+    ap.add_argument("theme")
+    ap.add_argument("--kind", default=None, help="ne montrer qu'un kind (préfixe, ex. grid)")
+    args = ap.parse_args()
+
+    try:
+        d = _find_theme(args.theme)
+    except FileNotFoundError as e:
+        fail(str(e))
+
+    cat = json.loads((d / "catalog.json").read_text("utf-8"))["layouts"]
+    groups: dict[str, list] = defaultdict(list)
+    for l in cat:
+        groups[l["kind"]].append(l)
+
+    print(f"Thème « {args.theme} » — {len(cat)} masques\n  {d}\n")
+    for kind in sorted(groups):
+        if args.kind and not kind.startswith(args.kind):
+            continue
+        print(f"▸ {kind}")
+        for l in groups[kind]:
+            s = l["signature"]
+            roles = [r for r in ("title", "eyebrow", "subtitle") if s.get("has_" + r)]
+            cap = f"{s['content']} content"
+            if s["pictures"]:
+                cap += f" · {s['pictures']} img"
+            print(f"    {l['name']:<36} {cap:<18} {' + '.join(roles)}")
+        print()
+    print(f"→ composer : NativeDeck(\"{args.theme}\").add(\"<masque>\", "
+          "title=…, subtitle=…, cells=[(t,d)…] | items=[(n,d)…] | number=…, "
+          "photo=…, icons=[…])")
+    print("  rôles remplissables : title · eyebrow · subtitle · content (cells/items/number) "
+          "· picture (photo/icons) · date · footer")
+
+
+if __name__ == "__main__":
+    main()

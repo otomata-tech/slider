@@ -29,9 +29,20 @@ Le binaire s'auto-localise (realpath) : pas besoin de `SLIDER_ROOT` ni d'`activa
 - **Lib** (`lib/`) : `Charte.load(name)`, `Deck()`, `pptx_to_pdf()`.
 - **Decks** (`decks/<nom>/`) : data + assembleur + outputs. Instance d'un deck concret.
 
+## Deux modes de fabrication
+
+- **Template-natif** (à privilégier quand le client a un VRAI template PPTX) : on
+  remplit les **propres masques du client** (fidélité maximale). On `ingest` le
+  template comme thème (skill `charte-extract`), puis on compose avec `NativeDeck`
+  → workflow [`guides/07-template-native.md`](guides/07-template-native.md).
+- **Layouts génériques** (quand pas de template : juste une charte de tokens) : on
+  compose les masques Python du kit (`Deck.add(layout.render, …)`) — guides 01-06.
+
 ## Quand appeler ce skill
 
 L'utilisateur veut :
+- **Refaire un deck dans le template d'un client** (fidèle à sa marque) → mode
+  template-natif → workflow [`guides/07-template-native.md`](guides/07-template-native.md)
 - **Mettre au propre un pptx existant** → workflow [`guides/01-cleanup-existing.md`](guides/01-cleanup-existing.md)
 - **Créer un deck à partir de zéro** → workflow [`guides/02-compose-new.md`](guides/02-compose-new.md)
 - **Ajouter un nouveau type de slide** → workflow [`guides/03-add-layout.md`](guides/03-add-layout.md)
@@ -53,10 +64,13 @@ Tous les scripts sont sous `scripts/`. Appel par chemin absolu (cf. « Invocatio
 ```bash
 "$SC" list-layouts                          # catalogue des masques
 "$SC" layout-info <nom>                     # signature + kwargs d'un masque
-"$SC" list-chartes                          # marques dispo
+"$SC" list-chartes                          # marques / thèmes dispo
+"$SC" ingest <template.pptx> --name=<t>     # ingère un template client comme thème (natif)
+"$SC" catalog <theme> [--kind=..]           # masques d'un thème + rôles (choisir un masque)
 "$SC" extract-pptx <source.pptx> <dest>     # texte + assets d'un pptx
 "$SC" extract-pdf <source.pdf> <dest>       # texte + images + bboxes d'un pdf
-"$SC" new <nom> --charte=<name>             # scaffold d'un nouveau deck
+"$SC" new-native <nom> --theme=<t>          # scaffold deck NATIF (NativeDeck)
+"$SC" new <nom> --charte=<name>             # scaffold deck classique (layouts Python)
 "$SC" lint <deck-dir>                       # VALIDE data/build avant le build
 "$SC" build <deck-dir>                      # → out/deck.pptx (livrable par défaut)
 "$SC" build <deck-dir> --pdf                # + out/deck.pdf (seulement si demandé)
