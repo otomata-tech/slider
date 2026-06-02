@@ -97,15 +97,32 @@ class Deck:
         section navigation, etc.).
         """
         self.pages += 1
-        # Lint mode : valider le contrat de l'appel, sans rien rendre.
+        sig = inspect.signature(render_fn)
+        params = sig.parameters
+
+        # Lint mode : valider le contrat de l'appel PUIS exercer le vrai chemin
+        # de rendu pour attraper les manques charte↔layout (color/type-scale/
+        # chrome absents, assets introuvables) — sinon le build « ✓ conforme »
+        # plante token par token. On ne rend que si le contrat de CET appel est
+        # propre (sinon render_fn lèverait un TypeError redondant).
         if _lint_mode():
+            before = len(_LINT_ISSUES)
             _validate_add(render_fn, kwargs, self.pages)
+            if len(_LINT_ISSUES) == before:
+                rkwargs = dict(kwargs)
+                if "page_num" in params and "page_num" not in rkwargs:
+                    rkwargs["page_num"] = self.pages
+                try:
+                    render_fn(add_blank_slide(self.prs), self.charte, **rkwargs)
+                except Exception as e:
+                    layout = render_fn.__module__.split(".")[-1]
+                    _LINT_ISSUES.append({
+                        "page": self.pages, "layout": layout, "level": "error",
+                        "msg": f"rendu impossible — {type(e).__name__}: {e}"})
             return None
 
         slide = add_blank_slide(self.prs)
         # auto-inject page_num if the render fn wants it
-        sig = inspect.signature(render_fn)
-        params = sig.parameters
         if "page_num" in params and "page_num" not in kwargs:
             kwargs["page_num"] = self.pages
 

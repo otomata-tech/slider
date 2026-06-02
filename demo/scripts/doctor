@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""Valide qu'une charte fournit tout le contrat de tokens dont la bibliothèque
+de masques a besoin — AVANT de composer un deck.
+
+Le kit de masques génériques (`layouts/*.py`) déréférence des tokens charte :
+`ca.color("…")`, `ca.token_size("…")`, `ca.font_primary`, et le bloc `chrome`.
+Une charte dérivée d'un template (ingest) ou écrite à la main peut en manquer —
+auquel cas le build plante token par token. `doctor` relève le contrat réel en
+scannant les masques, puis liste ce qui manque dans la charte, d'un coup.
+
+Usage :
+    slide-craft doctor <charte>          # ex. slide-craft doctor otomata
+"""
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+from _common import LAYOUTS, fail
+from lib.charte import Charte
+
+# Tokens littéraux déréférencés par les masques. Scan statique : couvre les
+# appels `ca.color("x")` / `ca.token_size("y")` écrits en clair (cas réel à
+# 100 % dans layouts/). Les clés calculées dynamiquement (rares) échappent au
+# scan — signalé en fin de rapport pour ne pas masquer une couverture partielle.
+_COLOR_RE = re.compile(r'\.color\(\s*"([a-z0-9-]+)"\s*\)')
+_SIZE_RE = re.compile(r'\.token_size\(\s*"([a-z0-9-]+)"\s*\)')
+
+
+def _scan_contract() -> tuple[set[str], set[str], bool]:
+    colors: set[str] = set()
+    sizes: set[str] = set()
+    uses_chrome = False
+    for f in sorted(LAYOUTS.glob("*.py")):
+        src = f.read_text(encoding="utf-8")
+        colors.update(_COLOR_RE.findall(src))
+        sizes.update(_SIZE_RE.findall(src))
+        if 'chrome' in src and 'header_brand' in src:
+            uses_chrome = True
+    return colors, sizes, uses_chrome
+
+
+def main():
+    if len(sys.argv) < 2:
+        fail("usage: slide-craft doctor <charte>")
+    name = sys.argv[1]
+    try:
+        ca = Charte.load(name)
+    except FileNotFoundError as e:
+        fail(str(e))
+
+    req_colors, req_sizes, uses_chrome = _scan_contract()
+    have_colors = set((ca.tokens.get("colors") or {}).keys())
+    have_sizes = set((ca.tokens.get("type-scale") or {}).keys())
+
+    missing_colors = sorted(req_colors - have_colors)
+    missing_sizes = sorted(req_sizes - have_sizes)
+
+    errors: list[str] = []
+    warns: list[str] = []
+
+    if "type-scale" not in ca.tokens:
+        errors.append("section 'type-scale' absente (échelle typo requise par le kit)")
+    elif missing_sizes:
+        errors.append(f"type-scale manquants : {', '.join(missing_sizes)}")
+    if missing_colors:
+        errors.append(f"couleurs manquantes : {', '.join(missing_colors)}")
+
+    try:
+        ca.font_primary
+    except (KeyError, TypeError):
+        errors.append("fonts.primary.family absent")
+
+    chrome = ca.tokens.get("chrome") or {}
+    if uses_chrome and not chrome.get("header_brand"):
+        warns.append("chrome.header_brand absent → en-tête sans wordmark "
+                     "(numéro de page seul). Déclare-le pour afficher la marque.")
+
+    print(f"charte « {name} » — {ca.root}")
+    print(f"  contrat masques : {len(req_colors)} couleurs, {len(req_sizes)} tailles type-scale")
+    if not errors and not warns:
+        print("✓ conforme — la charte fournit tout ce que le kit de masques requiert.")
+        sys.exit(0)
+    for e in errors:
+        print(f"  ✗ {e}")
+    for w in warns:
+        print(f"  ⚠ {w}")
+    print("\nNote : scan statique des littéraux color()/token_size() ; "
+          "une clé calculée dynamiquement n'est pas vérifiée.")
+    print(f"→ {len(errors)} erreur(s), {len(warns)} avertissement(s).")
+    sys.exit(1 if errors else 0)
+
+
+if __name__ == "__main__":
+    main()

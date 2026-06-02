@@ -1,13 +1,15 @@
-"""Internal helper : chrome de page PCDI (kit Capital Innovation).
+"""Internal helper : chrome de page générique (en-tête + pied), piloté charte.
 
 Ossature constante des pages intérieures :
   1. wordmark + numéro de page (haut-gauche), capitales tracées
-  2. mention d'usage (haut-droite)
+     → wordmark = `chrome.header_brand` de la charte (vide ⇒ numéro seul)
+  2. mention d'usage (haut-droite) → `chrome.header_usage` (vide ⇒ masquée)
   3. filet noir 1px séparant l'en-tête du contenu
-  4. pied de page : date (gauche) + logo Crédit Agricole (droite)
+  4. pied de page : date (gauche) + logo de marque (droite)
 
-Le bloc de titre (titre capitales + sous-titre vert) reste à la charge de
-chaque masque — il fait partie du contenu, pas du chrome.
+Aucune marque codée en dur : tout branding vient de la charte. Le bloc de
+titre (titre capitales + sous-titre) reste à la charge de chaque masque —
+il fait partie du contenu, pas du chrome.
 """
 from __future__ import annotations
 
@@ -37,17 +39,20 @@ def draw(slide, ca, *,
 
     Le wordmark d'en-tête (`brand_text`) et la mention d'usage (`usage_text`)
     sont résolus, quand l'appelant ne les passe pas, depuis le bloc `chrome`
-    de la charte (`header_brand` / `header_usage`), avec repli sur les valeurs
-    historiques du kit PCDI. Une mention d'usage vide ("") masque le bloc.
+    de la charte (`header_brand` / `header_usage`). **Aucun repli vers une
+    marque codée en dur** : le branding appartient à la charte, jamais au
+    moteur (sinon une charte fuit le wordmark d'une autre). Absent ⇒ vide :
+    le wordmark se réduit au numéro de page, la mention d'usage est masquée.
+    Une charte qui veut un wordmark doit le déclarer dans `chrome.header_brand`.
 
     `section_tag` est conservé pour compat mais n'est plus rendu (le kit n'a
     pas de pastille de section dans le chrome).
     """
     chrome = ca.tokens.get("chrome", {})
     if brand_text is None:
-        brand_text = chrome.get("header_brand", "PCDI – Capital Innovation")
+        brand_text = chrome.get("header_brand", "")
     if usage_text is None:
-        usage_text = chrome.get("header_usage", "Usage Interne / Internal Use")
+        usage_text = chrome.get("header_usage", "")
 
     top_y = 0.62
     half = SLIDE_W_CM / 2
@@ -56,7 +61,8 @@ def draw(slide, ca, *,
     _, tf = add_text(slide, MARGIN_CM, top_y, half - MARGIN_CM, 0.5,
                      margins=(0, 0, 0, 0))
     p = para(tf, first=True)
-    r = run(p, f"{page_num:02d}   {brand_text.upper()}",
+    wordmark = f"{page_num:02d}   {brand_text.upper()}" if brand_text else f"{page_num:02d}"
+    r = run(p, wordmark,
             size=8, color=ca.color("muted"), font=ca.font_primary)
     _track(r, 60)
 

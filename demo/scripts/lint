@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Valide un deck AVANT le build : kwargs vs signatures + existence des images.
+"""Valide un deck AVANT le build : kwargs vs signatures, existence des images,
+ET rendu réel de chaque slide contre la charte (tokens color/type-scale/chrome).
 
-Exécute le build.py du deck en mode lint (Deck.add valide chaque appel au lieu
-de rendre), puis restitue toutes les violations d'un coup — au lieu de planter
-slide par slide au build.
+Exécute le build.py du deck en mode lint : Deck.add valide le contrat de chaque
+appel puis rend la slide dans une présentation jetable, en capturant toute erreur
+(token charte manquant, asset, bug layout) au lieu de planter au build. Restitue
+toutes les violations d'un coup.
 
 Usage :
     slide-craft lint <deck-dir>
@@ -46,7 +48,7 @@ def main():
     warns = [i for i in issues if i["level"] == "warn"]
 
     if not issues:
-        print(f"✓ {deck.name} : conforme — kwargs et images valides.")
+        print(f"✓ {deck.name} : conforme — kwargs, images et rendu charte valides.")
         sys.exit(0)
 
     for i in sorted(issues, key=lambda x: (x["page"], x["level"])):

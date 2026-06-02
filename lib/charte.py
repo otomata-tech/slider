@@ -146,8 +146,15 @@ class Charte:
     # ------------------------------------------------------------------ scale
 
     def token_size(self, key: str) -> float:
-        """Return the pt size for a named scale entry (h1, h2, body, …)."""
-        return float(self.tokens["type-scale"][key]["size_pt"])
+        """Return the pt size for a named scale entry (h1, h2, body, …).
+        Raises KeyError with a clear message if the scale or entry is missing."""
+        scale = self.tokens.get("type-scale")
+        if not scale:
+            raise KeyError(f"charte '{self.name}' has no 'type-scale' section")
+        entry = scale.get(key)
+        if entry is None or "size_pt" not in entry:
+            raise KeyError(f"type-scale '{key}.size_pt' not in charte '{self.name}'")
+        return float(entry["size_pt"])
 
     # ------------------------------------------------------------------ assets
 

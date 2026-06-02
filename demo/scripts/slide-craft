@@ -18,6 +18,7 @@ Usage:
   slide-craft list-layouts                       list available masques
   slide-craft layout-info <name>                 show kwargs of a masque
   slide-craft list-chartes                       list available marques
+  slide-craft doctor <charte>                    check a charte provides every token the layouts need
   slide-craft extract-pptx <source.pptx> <dest>  extract text + assets
   slide-craft extract-charte <source.pptx> ...   derive a theme (colors/fonts only)
   slide-craft ingest <template.pptx> --name=..   ingest a client template AS a theme
