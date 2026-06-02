@@ -1,18 +1,21 @@
 ---
 name: theme
-description: "Crée ou édite un thème (charte) : tokens.json + assets. Soit de zéro, soit dérivé d'un PPTX corporate / brand book (couleurs dominantes, polices, logos). Utiliser quand l'utilisateur dit 'crée une charte', 'crée une charte depuis ce pptx', 'extrais le thème de ce deck', 'fais un thème pour le client X', 'édite le thème', 'ajoute une couleur à la charte'."
+description: "Crée ou édite un thème (charte) slider. Import depuis un support de marque, en DEUX modes : `ingest` (recommandé quand la source est un VRAI template PPTX avec ses masques) PRÉSERVE le template entier + catalogue ses layouts + dérive les tokens ; `extract-charte` (repli) ne relève que couleurs/polices d'un brand book sans masques. Ou créer un thème de zéro. Utiliser quand l'utilisateur dit 'crée une charte', 'crée un thème depuis ce pptx', 'importe le template du client X', 'extrais le thème de ce deck', 'édite le thème'."
 argument-hint: "[<source.pptx> --name=<theme>]"
 ---
 
 # theme
 
-Crée ou édite un **thème** (charte) : la palette, les polices, les assets qui
-définissent le look. Deux voies :
+Crée ou édite un **thème** (charte). Point clé : **un thème n'est pas un
+nuancier**. Si la source est un vrai template (master + slideLayouts), le thème
+doit le **préserver en entier** — c'est lui qui porte le look (géométrie, décor,
+styles), pas quelques tokens. Réduire un template à des couleurs/polices fait
+perdre tout ce qui rend une slide « à la marque » (bonnes couleurs, mais mise en
+page d'un autre kit).
 
-- **De zéro** : scaffolder un `chartes/<name>/tokens.json` et le remplir à la main
-  → suivre le guide [`../../demo/guides/04-add-charte.md`](../../demo/guides/04-add-charte.md).
-- **Dérivé d'un support de marque** (PPTX corporate, template client, brand book
-  en PPTX) → procédure ci-dessous (`extract-charte`).
+Deux voies : **dériver d'un support de marque** (procédure ci-dessous) ou **créer
+de zéro** un `tokens.json` à la main → guide
+[`../../demo/guides/04-add-charte.md`](../../demo/guides/04-add-charte.md).
 
 ## Invocation du CLI
 
@@ -21,77 +24,75 @@ SC="${CLAUDE_PLUGIN_ROOT:-.}/demo/bin/slide-craft"
 ```
 (à redéfinir dans chaque appel Bash — cf. le skill `deck`.)
 
-## Distinction avec les autres skills
+## Choisir le mode
 
-- **`theme`** (ici) : source → **thème** (tokens + assets). On produit une *charte réutilisable*.
-- **`deck`** (`from-pdf` / `cleanup-existing`) : source → **un deck** dans une charte *déjà existante*.
+- **`theme`** (ici) : source → **thème** (template préservé + tokens). On produit une *marque réutilisable*.
+- **`deck`** : source → **un deck** dans un thème *existant*. Si l'utilisateur veut juste refaire un deck, ce n'est pas ce skill.
 
-Si l'utilisateur veut juste refaire UN deck, ce n'est pas ce skill → `deck`.
-
-## Procédure
-
-### 1. Classer couleurs et polices de la source
+Sinon, pour un import : la source a-t-elle des masques PowerPoint (slideLayouts) ?
 
 ```bash
-"$SC" extract-charte <source.pptx> --name=<theme>
+"$SC" extract-pptx <source.pptx> /tmp/probe/ >/dev/null   # ou inspecter
+python3 -c "from pptx import Presentation; p=Presentation('<source.pptx>'); \
+print(sum(len(m.slide_layouts) for m in p.slide_masters), 'layouts')"
 ```
 
-Affiche les couleurs dominantes (par fréquence d'usage) avec un **rôle probable**
-(bg clair / text sombre / couleur de marque saturée / neutre) et les polices.
-Lire ce classement : c'est la matière première.
+- **≥ ~5 layouts nommés → `ingest`** (mode template-natif, recommandé). On garde le template.
+- **Pas de masques (brand book, export plat, PDF→PPTX) → `extract-charte`** (repli nuancier).
 
-### 2. Écrire le squelette
+## Mode A — `ingest` (template préservé) ⟵ par défaut pour un template
 
 ```bash
-"$SC" extract-charte <source.pptx> --name=<theme> --out=<engine>/chartes
+"$SC" ingest <source.pptx> --name=<theme>     # → ~/.local/share/slider/chartes/<theme>/
 ```
 
-Écrit `chartes/<theme>/tokens.json` (squelette : `primary`, `text`, `bg`, etc.
-assignés par heuristique + `_palette_brute` = toutes les couleurs vues).
+Produit, dans `<theme>/` :
+- **`template.pptx`** — le template du client, conservé tel quel (master + slideLayouts intacts).
+- **`catalog.json`** — chaque layout → ses placeholders avec **rôle déduit** (title / eyebrow / subtitle / content / picture / number / footnote / footer) + une **signature** (nb de zones de contenu, photos, etc.) + un `kind` indicatif (cover / section / grid-N / list / statement / agenda / end).
+- **`tokens.json`** — palette (clrScheme) + police (fontScheme) du thème, en métadonnée pour recolorer icônes / cadrer images.
+- **`assets/photo/`** — photos du template (jpeg/png, wdp converti si `convert` dispo).
 
-> Destination : le dossier thèmes stable (`~/.local/share/slider/chartes`) pour
-> un usage persistant, ou `chartes/` du moteur en dev.
-
-### 3. Raffiner les rôles (jugement)
-
-L'heuristique propose ; toi tu **valides et complètes** en éditant `tokens.json` :
-- Vérifier `primary` (la couleur de marque dominante) et ajouter ses variantes
-  (`primary-dark`, `primary-deep`) si la marque en a.
-- Promouvoir depuis `_palette_brute` les **accents** (signature, mint, alert…) et
-  les supprimer du tableau brut une fois assignés.
-- Compléter `type-scale`, `radii`, `spacing`, `defaults` (cf. une charte
-  existante comme référence, ex. `credit-agricole`).
-- Renseigner `label`, `source`, `notes`.
-
-Ne jamais laisser le squelette tel quel : c'est un point de départ, pas une charte.
-
-### 4. Ajouter les assets
-
-Extraire logos / photos de la source :
-```bash
-"$SC" extract-pptx <source.pptx> /tmp/brand/
-```
-Repérer les logos (images petites, récurrentes) et les ranger dans
-`chartes/<theme>/assets/logo/`, `assets/photo/`, `assets/fonts/`. Câbler les
-chemins dans `tokens.json#defaults` (`cover_logo`, `header_logo`, `cover_photo`).
-
-Si la marque impose une police propriétaire, déposer les `.ttf` dans
-`assets/fonts/` et ajuster `fonts.primary.local_files`.
-
-### 5. Vérifier
+### Vérifier l'import
 
 ```bash
-"$SC" list-chartes                       # le thème apparaît
-"$SC" new test-<theme> --charte=<theme>  # scaffold de contrôle
-"$SC" build decks/test-<theme>           # rendu — ouvrir le PDF
+"$SC" catalog <theme>            # masques + rôles + capacité (lecture agent)
+ls <theme>/                      # template.pptx + catalog.json + tokens.json + assets/
 ```
 
-Itérer sur `tokens.json` jusqu'à un rendu fidèle à la marque source.
+Contrôler : le nombre de layouts correspond au template, les rôles des placeholders
+sont plausibles (un `title` par layout, des `content` dans la bande centrale,
+`picture` repérées), la palette tokens contient bien les couleurs de marque.
+
+### Construire un deck dans ce thème (template-natif)
+
+On **remplit les layouts du thème par RÔLE** (jamais par idx — les variantes
+renumérotent), via `NativeDeck`. Scaffold : `slide-craft new-native <deck> --theme=<theme>`,
+puis `build` / `preview`. Détails : guide
+[`../../demo/guides/07-template-native.md`](../../demo/guides/07-template-native.md).
+
+> Affiner ensuite `tokens.json` (rôles `primary`/`signature`, variantes) reste
+> utile pour les icônes/images, mais le rendu vient du template préservé.
+
+## Mode B — `extract-charte` (repli : brand book sans masques)
+
+Quand il n'y a pas de template à préserver — uniquement relever les couleurs/polices :
+
+```bash
+"$SC" extract-charte <source.pptx> --name=<theme>               # classe couleurs/polices
+"$SC" extract-charte <source.pptx> --name=<theme> --out=<dir>   # écrit un squelette tokens.json
+```
+
+Puis raffiner `tokens.json` à la main (rôles `primary`/`signature`/accents depuis
+`_palette_brute`, `type-scale`, `defaults`), ajouter logos/photos/fonts dans
+`assets/`. Dans ce mode, la géométrie viendra des layouts Python génériques de
+slider (pas du client) — c'est un pis-aller esthétique, à réserver aux cas sans
+template.
 
 ## Limites
 
-- `extract-charte` lit les couleurs/polices **explicites** du PPTX (runs + aplats),
-  pas un thème PowerPoint non résolu ni un PDF. Pour un brand book PDF, demander
-  un export PPTX ou relever les hex à la main.
-- L'affectation des rôles est une **heuristique** (luminance/saturation) : toujours
-  valider visuellement à l'étape 5.
+- `ingest` lit le thème PPTX résolu (clrScheme) : il récupère la vraie palette même
+  quand les runs n'ont que des couleurs de thème — là où `extract-charte` ne voit
+  que des gris. Préférer `ingest` dès qu'il y a des masques.
+- Le mapping tokens d'`ingest` (primary/signature) est heuristique — raffinable,
+  mais secondaire puisque le look vient du template.
+- `kind` du catalogue est indicatif : un agent choisit le layout final avec jugement.
