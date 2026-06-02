@@ -25,8 +25,6 @@ deck.export_pdf("out/deck.pptx", "out/deck.pdf")
 
 ### `cover_split` — couverture deux colonnes
 
-![cover_split](./previews/cover_split.png)
-
 **Usage** : page de garde. Image + brand à gauche, titre + accroche à droite.
 
 **Signature** :
@@ -47,8 +45,6 @@ cover_split.render(slide, charte, *,
 
 ### `section_divider` — séparateur de section pleine page
 
-![section_divider](./previews/section_divider.png)
-
 **Usage** : introduire une partie. Fond `primary-deep`, eyebrow + titre + sous-titre, n° de page.
 
 **Signature** :
@@ -63,8 +59,6 @@ section_divider.render(slide, charte, *,
 ---
 
 ### `event_fiche` — fiche événement détaillée
-
-![event_fiche](./previews/event_fiche.png)
 
 **Usage** : un événement / un partenaire / une opportunité. Header + bloc titre (avec logo event optionnel), date/lieu, deux colonnes (faits | recommandations), highlight bas.
 
@@ -98,7 +92,7 @@ event_fiche.render(slide, charte, *,
    - `ca.color("...")`, `ca.font_primary`, `ca.token_size("...")` pour la charte
    - Jamais de couleur/font hardcodée
 4. Si le masque a besoin du header standard, importer `layouts._header.draw`.
-5. Ajouter un preview PNG dans `previews/<slug>.png` (export depuis un deck de référence).
+5. Ajouter un preview PNG dans `previews/<slug>.png` — rendu avec la charte `blank` (JAMAIS un deck client : ces PNG peuvent finir dans un repo public).
 6. Documenter ici (titre + image + signature + usage).
 
 ## Conventions
