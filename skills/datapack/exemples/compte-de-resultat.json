@@ -1,0 +1,140 @@
+{
+ "sheets": [
+  {
+   "name": "P&L",
+   "title": "Projet Test | Compte de résultat",
+   "columns": [
+    {
+     "kind": "value",
+     "period": "24",
+     "header": "FY24"
+    },
+    {
+     "kind": "value",
+     "period": "25",
+     "header": "FY25"
+    },
+    {
+     "kind": "gap"
+    },
+    {
+     "kind": "var",
+     "header": "Var.",
+     "from": "24",
+     "to": "25"
+    },
+    {
+     "kind": "note",
+     "header": "Note"
+    }
+   ],
+   "groups": [
+    {
+     "from": "24",
+     "to": "25",
+     "text": "Historique"
+    }
+   ],
+   "rows": [
+    {
+     "kind": "band",
+     "label": "Chiffre d'affaires",
+     "key": "ca",
+     "values": [
+      1000,
+      1100
+     ],
+     "source": "Comptabilité",
+     "var": "pct",
+     "note": "1"
+    },
+    {
+     "kind": "spacer"
+    },
+    {
+     "kind": "line",
+     "label": "Achats",
+     "key": "ach",
+     "values": [
+      -400,
+      -450
+     ],
+     "source": "Comptabilité",
+     "var": "pct"
+    },
+    {
+     "kind": "detail",
+     "label": "dont matières",
+     "values": [
+      -100,
+      "n.c."
+     ]
+    },
+    {
+     "kind": "subtotal",
+     "label": "Marge brute",
+     "key": "mb",
+     "values": "={ca}+{ach}",
+     "var": "pct",
+     "note": "1.1"
+    },
+    {
+     "kind": "kpi",
+     "label": "Taux de marge",
+     "values": "={mb}/{ca}",
+     "var": "pp"
+    },
+    {
+     "kind": "dots"
+    },
+    {
+     "kind": "footnote",
+     "label": "Source : comptes annuels"
+    },
+    {
+     "kind": "control",
+     "label": "Marge publiée",
+     "key": "pub",
+     "values": [
+      600,
+      650
+     ],
+     "source": "Information client"
+    },
+    {
+     "kind": "check",
+     "label": "Écart",
+     "values": "={mb}-{pub}"
+    }
+   ]
+  },
+  {
+   "name": "KPI",
+   "title": "Projet Test | Indicateurs",
+   "columns": [
+    {
+     "kind": "value",
+     "period": "24",
+     "header": "FY24"
+    },
+    {
+     "kind": "value",
+     "period": "25",
+     "header": "FY25"
+    }
+   ],
+   "rows": [
+    {
+     "kind": "line",
+     "label": "CA repris",
+     "values": "={P&L!ca}"
+    },
+    {
+     "kind": "line",
+     "label": "CA FY25 figé",
+     "values": "={P&L!ca@25}"
+    }
+   ]
+  }
+ ]
+}

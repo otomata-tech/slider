@@ -23,6 +23,7 @@ Atelier pour produire des decks PowerPoint propres (PPTX, et PDF à la demande) 
 | `deck` | créer / nettoyer / recréer un deck, ajouter masque, charts, depuis doc/pdf/pptx |
 | `review` | lint de conformité d'un `.pptx` à sa charte |
 | `theme` | créer / dériver / éditer une charte, y compris **ingest** d'un template client |
+| `datapack` | classeur Excel (datapack) à la charte, depuis une description JSON |
 
 ⚠️ **Skill ≠ CLI** : le skill s'appelle `deck`, le binaire moteur interne (appelé par Claude, jamais par l'utilisateur) reste `slide-craft`. Règle : **un skill = un workflow**, pas une primitive — un masque, un helper ou un sous-format vit dans `deck`, pas dans un skill à part. Câblage : `skills/<nom>/SKILL.md` + symlink `.claude/skills/<nom>`.
 
@@ -67,6 +68,16 @@ Guide : [`demo/guides/07-template-native.md`](./demo/guides/07-template-native.m
 - **`lint` rend pour de vrai** : il valide les kwargs et les chemins d'image, puis rend chaque slide dans une présentation jetable (il attrape les tokens de couleur ou d'échelle manquants, les assets, les bugs de masque). Un `✓ conforme` garantit que le `build` passera.
 - **`doctor <charte>`** scanne les littéraux `color()` / `token_size()` des masques et liste ce que la charte ne fournit pas. Indispensable après un `ingest` : une charte dérivée d'un template manque souvent des tokens du kit générique.
 - **API d'un masque** : `layouts/<nom>.py` expose `render(slide, charte, *, …, page_num: int)` — `slide` et `charte` positionnels en premier, tout le reste en kwargs, `page_num` auto-injecté par `Deck.add` s'il est déclaré, aucun effet de bord hors du `slide` reçu. La liste des masques se lit par `slide-craft list-layouts`, pas ici.
+
+## Datapacks Excel (`lib/datapack.py`)
+
+Même principe que les decks : la charte (`tokens.json#excel`) fixe toute la forme, Claude ne décrit que le contenu. **Exception assumée au « pas de DSL »** : la description est une spec JSON, parce qu'elle porte des données (lignes de chiffres) et qu'elle doit pouvoir venir d'ailleurs que d'un script Python (connecteur, autre agent). Invariants :
+- la charte porte la liste fermée des **sources** et des **fonctions Excel** autorisées ; toute formule écrite, celles du moteur comprises (`excel.variations`), est vérifiée contre cette liste ;
+- formules par clés de ligne (`{clé}`, `{clé@période}`, `{Onglet!clé}`), jamais de référence de cellule en dur ;
+- une seule taille de police (`excel.size`), aucune cellule fusionnée (surtitres en `centerContinuous`), recalcul à l'ouverture ;
+- les types de lignes sont ceux de la charte (`excel.rows`) : un nouveau type est une entrée de charte, pas du code.
+
+Tests : `uv run pytest tests/` (CI GitHub), données inventées uniquement.
 
 ## Guides
 
